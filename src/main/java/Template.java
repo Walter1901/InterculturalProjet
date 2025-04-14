@@ -1,5 +1,3 @@
-package homescreen;
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -19,7 +17,7 @@ public class Template extends JFrame {
     private JLabel batteryLabel;
 
     public Template() {
-        setTitle("Phone homescreen.Template");
+        setTitle("Phone Template");
         setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setResizable(false);
