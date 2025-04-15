@@ -41,7 +41,7 @@ public class Homescreen extends phoneUtils{
     public static JPanel createAppIconsPanel(JFrame parentFrame) {
         JPanel appIconsPanel = new JPanel(new GridLayout(2, 2, 40, 40));
         appIconsPanel.setBackground(backgroundColor);
-        appIconsPanel.setBorder(BorderFactory.createEmptyBorder(90, 30, 150, 30));
+        appIconsPanel.setBorder(BorderFactory.createEmptyBorder(0, 30, 150, 30));
 
         appIconsPanel.add(createAppButton("Address Book", "src/main/resources/addressBookIcon.png", parentFrame));
         appIconsPanel.add(createAppButton("Picture Gallery", "src/main/resources/galleryIcon.png", parentFrame));
@@ -58,7 +58,7 @@ public class Homescreen extends phoneUtils{
 
         try {
             ImageIcon icon = new ImageIcon(iconPath);
-            Image img = icon.getImage().getScaledInstance(80, 80, Image.SCALE_SMOOTH);
+            Image img = icon.getImage().getScaledInstance(90, 90, Image.SCALE_SMOOTH);
             appButton.setIcon(new ImageIcon(img));
         } catch (Exception e) {
             System.err.println("Error loading icon from path: " + iconPath);
