@@ -5,7 +5,7 @@ public class InvestifyApp {
 
     public static JPanel createInvestify() {
 
-        JPanel investifyApp = new JPanel();
+        JPanel investifyApp = new JPanel(); // main panel with a grid layout
         investifyApp.setBackground(phoneUtils.backgroundColor);
         investifyApp.setLayout(new GridLayout(3,1));
 

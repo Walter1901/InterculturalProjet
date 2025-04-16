@@ -43,10 +43,10 @@ public class Homescreen extends phoneUtils{
         appIconsPanel.setBackground(backgroundColor);
         appIconsPanel.setBorder(BorderFactory.createEmptyBorder(0, 30, 150, 30));
 
-        appIconsPanel.add(createAppButton("Address Book", "src/main/resources/addressBookIcon.png", parentFrame));
-        appIconsPanel.add(createAppButton("Picture Gallery", "src/main/resources/galleryIcon.png", parentFrame));
-        appIconsPanel.add(createAppButton("Finance Tracker", "src/main/resources/financeTrackerIcon.png", parentFrame));
-        appIconsPanel.add(createAppButton("Investify", "src/main/resources/investifyIcon.png", parentFrame));
+        appIconsPanel.add(createAppButton("Address Book", "src/main/resources/homescreenIcons/addressBookIcon.png", parentFrame));
+        appIconsPanel.add(createAppButton("Picture Gallery", "src/main/resources/homescreenIcons/galleryIcon.png", parentFrame));
+        appIconsPanel.add(createAppButton("Finance Tracker", "src/main/resources/homescreenIcons/financeTrackerIcon.png", parentFrame));
+        appIconsPanel.add(createAppButton("Investify", "src/main/resources/homescreenIcons/investifyIcon.png", parentFrame));
 
         return appIconsPanel;
     }
