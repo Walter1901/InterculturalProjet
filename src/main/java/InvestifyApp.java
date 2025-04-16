@@ -43,11 +43,6 @@ public class InvestifyApp {
         investifyApp.add(new JLabel());
         investifyApp.add(investifyNavBar);
 
-
-
-
-
-
         return investifyApp;
     }
 
