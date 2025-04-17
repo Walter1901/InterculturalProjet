@@ -24,7 +24,7 @@ public class Menu {
 
     private static void showExpenses() {
         System.out.println("\nMy Expenses:");
-        // Hier würden echte Expenses aus einer Datenbank angezeigt werden
+
     }
 
     private static void showBalanceOverview() {
