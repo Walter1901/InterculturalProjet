@@ -2,57 +2,120 @@ package com.example;
 
 import javafx.application.Application;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
+import javafx.scene.control.Button;
 import javafx.scene.control.Separator;
-import javafx.scene.layout.VBox;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.*;
 import javafx.stage.Stage;
 
 public class MainApp extends Application {
+    private Stage primaryStage;
 
     @Override
     public void start(Stage primaryStage) {
-        // Hauptcontainer
-        VBox root = new VBox(10);
-        root.setPadding(new Insets(15));
+        this.primaryStage = primaryStage;
+        showMainPage();
+    }
 
-        // 1. Begrüßung (Component 1)
+    private void showMainPage() {
+        VBox root = new VBox(8);
+        root.setPadding(new Insets(16));
+        root.setAlignment(Pos.TOP_CENTER);
+        root.setStyle("-fx-background-color: #ffffff;");
+
+        // Begrüßung
         Label greeting = new Label("Hello User");
+        greeting.setStyle("-fx-font-size: 16px;");
 
-        // 2. Trennlinie
-        Separator separator1 = new Separator();
+        // Logo laden
+        try {
+            Image logo = new Image(getClass().getResourceAsStream("/logo.png"));
+            ImageView logoView = new ImageView(logo);
+            logoView.setFitHeight(100);
+            logoView.setPreserveRatio(true);
+            root.getChildren().add(logoView);
+        } catch (Exception e) {
+            System.out.println("Logo konnte nicht geladen werden");
+        }
 
-        // 3. Finanz-Tracker Überschrift
-        Label title = new Label("Finance Tracker");
+        // Menüzeile
+        HBox menu = new HBox(5);
+        Label menuArrow = new Label("Menu →");
+        menuArrow.setStyle("-fx-font-size: 16px;");
 
-        // 4. Menüzeile
-        Label menu = new Label("Menu → My expenses");
+        // Optionen - jetzt als klickbare Buttons
+        VBox options = new VBox(5);
 
-        // 5. Weitere Trennlinie
-        Separator separator2 = new Separator();
+        Button expensesBtn = new Button("My expenses");
+        expensesBtn.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; -fx-alignment: center-left;");
+        expensesBtn.setOnAction(e -> showExpenseManager());
 
-        // 6. Kontostand-Übersicht
-        Label balance = new Label("Balance overview");
+        Button balanceBtn = new Button("Balance overview");
+        balanceBtn.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; -fx-alignment: center-left;");
+        balanceBtn.setOnAction(e -> showBalanceOverview()); // Platzhalter
 
-        // 7. Optionen
-        Label options = new Label("Saving goals   Investment   Home   Stock   Account");
+        Button savingsBtn = new Button("Saving goals");
+        savingsBtn.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; -fx-alignment: center-left;");
+        savingsBtn.setOnAction(e -> showSavingGoals()); // Platzhalter
 
-        // Alle Komponenten hinzufügen
-        root.getChildren().addAll(
-                greeting,
-                separator1,
-                title,
-                menu,
-                separator2,
-                balance,
-                options
+        Button investmentBtn = new Button("Investment");
+        investmentBtn.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; -fx-alignment: center-left;");
+        investmentBtn.setOnAction(e -> showInvestment()); // Platzhalter
+
+        options.getChildren().addAll(expensesBtn, balanceBtn, savingsBtn, investmentBtn);
+
+        // Navigation (horizontal)
+        HBox nav = new HBox(20);
+        nav.setAlignment(Pos.CENTER);
+        nav.getChildren().addAll(
+                new Label("Home"),
+                new Label("Stock"),
+                new Label("Account")
         );
 
-        // Fenster erstellen und anzeigen
-        Scene scene = new Scene(root, 300, 250);
+        root.getChildren().addAll(
+                greeting,
+                menu,
+                new Separator(),
+                options,
+                new Separator(),
+                nav
+        );
+
+        primaryStage.setScene(new Scene(root, 300, 400));
         primaryStage.setTitle("Finance Tracker");
-        primaryStage.setScene(scene);
         primaryStage.show();
+    }
+
+    private void showExpenseManager() {
+        ExpenseManagerPage expensePage = new ExpenseManagerPage();
+        Scene scene = new Scene(expensePage, 400, 600);
+
+        Button backButton = new Button("Back");
+        backButton.setOnAction(e -> showMainPage());
+        expensePage.getChildren().add(backButton);
+
+        primaryStage.setScene(scene);
+    }
+
+    // Platzhalter-Methoden für die anderen Menüoptionen
+    private void showBalanceOverview() {
+        // Hier später die BalanceOverviewPage einbinden
+        System.out.println("Balance overview wird gezeigt");
+    }
+
+    private void showSavingGoals() {
+        // Hier später die SavingGoalsPage einbinden
+        System.out.println("Saving goals wird gezeigt");
+    }
+
+    private void showInvestment() {
+        // Hier später die InvestmentPage einbinden
+        System.out.println("Investment wird gezeigt");
     }
 
     public static void main(String[] args) {
