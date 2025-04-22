@@ -3,7 +3,6 @@ package com.example;
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
-import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
 import javafx.scene.layout.VBox;
@@ -17,37 +16,40 @@ public class MainApp extends Application {
         VBox root = new VBox(10);
         root.setPadding(new Insets(15));
 
-        // Menüzeile
-        Label menuLabel = new Label("Menu → My expenses");
+        // 1. Begrüßung (Component 1)
+        Label greeting = new Label("Hello User");
 
-        // Trennlinie
-        Separator separator = new Separator();
+        // 2. Trennlinie
+        Separator separator1 = new Separator();
 
-        // Überschrift
-        Label titleLabel = new Label("Balance overview");
+        // 3. Finanz-Tracker Überschrift
+        Label title = new Label("Finance Tracker");
 
-        // Checkboxen
-        CheckBox savingCheck = new CheckBox("Saving goals");
-        CheckBox investmentCheck = new CheckBox("Investment");
-        CheckBox homeCheck = new CheckBox("Home");
-        CheckBox stockCheck = new CheckBox("Stock");
-        stockCheck.setSelected(true);
-        CheckBox accountCheck = new CheckBox("Account");
+        // 4. Menüzeile
+        Label menu = new Label("Menu → My expenses");
+
+        // 5. Weitere Trennlinie
+        Separator separator2 = new Separator();
+
+        // 6. Kontostand-Übersicht
+        Label balance = new Label("Balance overview");
+
+        // 7. Optionen
+        Label options = new Label("Saving goals   Investment   Home   Stock   Account");
 
         // Alle Komponenten hinzufügen
         root.getChildren().addAll(
-                menuLabel,
-                separator,
-                titleLabel,
-                savingCheck,
-                investmentCheck,
-                homeCheck,
-                stockCheck,
-                accountCheck
+                greeting,
+                separator1,
+                title,
+                menu,
+                separator2,
+                balance,
+                options
         );
 
-        // Fenster erstellen
-        Scene scene = new Scene(root, 300, 400);
+        // Fenster erstellen und anzeigen
+        Scene scene = new Scene(root, 300, 250);
         primaryStage.setTitle("Finance Tracker");
         primaryStage.setScene(scene);
         primaryStage.show();
