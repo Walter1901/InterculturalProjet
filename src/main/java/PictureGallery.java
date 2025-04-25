@@ -64,7 +64,6 @@ public class PictureGallery {
 
         fullViewPanel.add(fullTopBar, BorderLayout.NORTH); // Ajoute la barre en haut
 
-
         JPanel fullControls = new JPanel();
         fullControls.setBackground(Color.WHITE);
         JButton resizeBtn = new JButton("Resize");
