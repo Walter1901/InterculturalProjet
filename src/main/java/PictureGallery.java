@@ -1,32 +1,34 @@
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.io.File;
+import java.io.*;
+import java.lang.reflect.Type;
 import java.net.URL;
-import java.net.URLDecoder;
 import java.util.*;
 import java.util.List;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
 
 public class PictureGallery {
+    private static final String SAVE_FILE = "gallery_data.json";
+
     private static JPanel galleryPanel;
     private static JPanel fullViewPanel;
     private static CardLayout viewLayout;
     private static JLabel fullImageLabel;
     private static JPanel pictureGalleryApp;
     private static Map<String, JPanel> albums = new HashMap<>();
+    private static Map<String, List<String>> albumData = new HashMap<>();
     private static String currentAlbum = "default";
 
     public static JPanel createPictureGallery() {
         viewLayout = new CardLayout();
         pictureGalleryApp = new JPanel(viewLayout);
 
-        // === Main View ===
         JPanel mainView = new JPanel(new BorderLayout());
         mainView.setBackground(Color.WHITE);
 
-        // === Top Bar ===
         JPanel topBar = new JPanel(new BorderLayout());
         topBar.setBackground(Color.WHITE);
 
@@ -43,17 +45,24 @@ public class PictureGallery {
         topBar.add(albumBtn, BorderLayout.EAST);
         mainView.add(topBar, BorderLayout.NORTH);
 
-        // === Gallery Panel ===
         galleryPanel = new JPanel(new GridLayout(0, 2, 10, 10));
         galleryPanel.setBackground(Color.WHITE);
         JScrollPane scrollPane = new JScrollPane(galleryPanel);
         mainView.add(scrollPane, BorderLayout.CENTER);
 
-        // === Full Image View ===
         fullViewPanel = new JPanel(new BorderLayout());
         fullViewPanel.setBackground(Color.WHITE);
         fullImageLabel = new JLabel("", SwingConstants.CENTER);
         fullViewPanel.add(fullImageLabel, BorderLayout.CENTER);
+
+        JPanel fullTopBar = new JPanel(new FlowLayout(FlowLayout.LEFT)); // Aligné à gauche
+        fullTopBar.setBackground(Color.WHITE);
+
+        JButton backBtn = new JButton("Back");
+        backBtn.addActionListener(e -> viewLayout.show(pictureGalleryApp, "main")); // Revient à la galerie
+        fullTopBar.add(backBtn);
+
+        fullViewPanel.add(fullTopBar, BorderLayout.NORTH); // Ajoute la barre en haut
 
         JPanel fullControls = new JPanel();
         fullControls.setBackground(Color.WHITE);
@@ -63,7 +72,6 @@ public class PictureGallery {
         fullControls.add(deleteBtn);
         fullViewPanel.add(fullControls, BorderLayout.SOUTH);
 
-        // === Actions ===
         addBtn.addActionListener(e -> showAddImageDialog());
         deleteBtn.addActionListener(e -> {
             int confirm = JOptionPane.showConfirmDialog(null, "Are you sure you want to delete this image?", "Confirm Deletion", JOptionPane.YES_NO_OPTION);
@@ -76,6 +84,17 @@ public class PictureGallery {
                         albumPanel.revalidate();
                         albumPanel.repaint();
                     }
+
+                    // Remove from album data
+                    for (Map.Entry<String, JPanel> entry : albums.entrySet()) {
+                        if (entry.getValue() == albumPanel) {
+                            List<String> paths = albumData.get(entry.getKey());
+                            paths.remove(origin.getClientProperty("resourcePath"));
+                            break;
+                        }
+                    }
+
+                    saveGallery();
                 }
                 viewLayout.show(pictureGalleryApp, "main");
             }
@@ -83,12 +102,14 @@ public class PictureGallery {
         resizeBtn.addActionListener(e -> showResizeDialog());
         albumBtn.addActionListener(e -> showAlbumChooser());
 
-        // === Views ===
         pictureGalleryApp.add(mainView, "main");
         pictureGalleryApp.add(fullViewPanel, "full");
 
-        viewLayout.show(pictureGalleryApp, "main");
         albums.put("default", galleryPanel);
+        albumData.put("default", new ArrayList<>());
+        loadGallery();
+
+        viewLayout.show(pictureGalleryApp, "main");
         return pictureGalleryApp;
     }
 
@@ -114,13 +135,15 @@ public class PictureGallery {
             getCurrentAlbumPanel().add(imgLabel);
             getCurrentAlbumPanel().revalidate();
             getCurrentAlbumPanel().repaint();
+            albumData.get(currentAlbum).add(selected);
+            saveGallery();
         }
     }
 
     private static JLabel createImageLabelFromResource(String resourcePath) {
         JLabel label = new JLabel();
         label.setHorizontalAlignment(SwingConstants.CENTER);
-        label.setBorder(BorderFactory.createLineBorder(Color.GRAY));
+        //label.setBorder(BorderFactory.createLineBorder(Color.GRAY));
 
         URL imageUrl = PictureGallery.class.getResource(resourcePath);
         if (imageUrl != null) {
@@ -131,8 +154,8 @@ public class PictureGallery {
             label.setText("X");
         }
 
-        // Store the album panel reference so we can update it later
         label.putClientProperty("albumPanel", getCurrentAlbumPanel());
+        label.putClientProperty("resourcePath", resourcePath);
 
         label.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
@@ -156,33 +179,21 @@ public class PictureGallery {
             int width = Integer.parseInt(parts[0]);
             int height = Integer.parseInt(parts[1]);
 
-            // Get the label of the selected image
             JLabel origin = (JLabel) fullImageLabel.getClientProperty("originLabel");
 
             if (origin != null && origin.getIcon() instanceof ImageIcon) {
                 ImageIcon oldIcon = (ImageIcon) origin.getIcon();
-
-                // Resize the image to the new size
                 Image resizedImage = oldIcon.getImage().getScaledInstance(width, height, Image.SCALE_SMOOTH);
                 ImageIcon resizedIcon = new ImageIcon(resizedImage);
 
-                // Set the resized image to the full view
                 fullImageLabel.setIcon(resizedIcon);
+                origin.setIcon(resizedIcon);
 
-                // Update the image in the gallery
                 JPanel albumPanel = (JPanel) origin.getClientProperty("albumPanel");
                 if (albumPanel != null) {
-                    // Ensure that the resized image is updated in the gallery as well
-                    origin.setIcon(resizedIcon);
-
-                    // Revalidate and repaint the panel containing the image
                     albumPanel.revalidate();
                     albumPanel.repaint();
                 }
-
-                // Also revalidate and repaint the full view panel
-                fullImageLabel.revalidate();
-                fullImageLabel.repaint();
             }
         } else {
             JOptionPane.showMessageDialog(null, "Invalid format. Use widthxheight");
@@ -197,6 +208,7 @@ public class PictureGallery {
                 JPanel newAlbum = new JPanel(new GridLayout(0, 2, 10, 10));
                 newAlbum.setBackground(Color.WHITE);
                 albums.put(name, newAlbum);
+                albumData.put(name, new ArrayList<>());
                 galleryPanel.add(new JLabel("<html><b>" + name + "</b></html>"));
                 galleryPanel.add(newAlbum);
                 galleryPanel.revalidate();
@@ -210,32 +222,56 @@ public class PictureGallery {
     }
 
     private static String[] getImageResourcePaths() {
-        List<String> paths = new ArrayList<>();
-        try {
-            String folder = "imageGallery";
-            URL dirURL = PictureGallery.class.getClassLoader().getResource(folder);
-            if (dirURL != null && dirURL.getProtocol().equals("file")) {
-                File[] files = new File(dirURL.toURI()).listFiles();
-                for (File file : files) {
-                    if (file.getName().endsWith(".jpg") || file.getName().endsWith(".png")) {
-                        paths.add("/" + folder + "/" + file.getName());
-                    }
-                }
-            } else if (dirURL != null && dirURL.getProtocol().equals("jar")) {
-                String jarPath = dirURL.getPath().substring(5, dirURL.getPath().indexOf("!"));
-                try (JarFile jar = new JarFile(URLDecoder.decode(jarPath, "UTF-8"))) {
-                    Enumeration<JarEntry> entries = jar.entries();
-                    while (entries.hasMoreElements()) {
-                        String name = entries.nextElement().getName();
-                        if (name.startsWith(folder + "/") && (name.endsWith(".jpg") || name.endsWith(".png"))) {
-                            paths.add("/" + name);
-                        }
-                    }
-                }
-            }
-        } catch (Exception e) {
+        String folder = "/imageGallery";
+        URL dirURL = PictureGallery.class.getResource(folder);
+        if (dirURL == null) return new String[0];
+        File directory = new File(dirURL.getFile());
+        File[] files = directory.listFiles((dir, name) -> name.endsWith(".jpg") || name.endsWith(".png"));
+
+        if (files == null) return new String[0];
+
+        List<String> result = new ArrayList<>();
+        for (File file : files) {
+            result.add(folder + "/" + file.getName());
+        }
+        return result.toArray(new String[0]);
+    }
+
+    private static void saveGallery() {
+        try (Writer writer = new FileWriter(SAVE_FILE)) {
+            new Gson().toJson(albumData, writer);
+        } catch (IOException e) {
             e.printStackTrace();
         }
-        return paths.toArray(new String[0]);
+    }
+
+    private static void loadGallery() {
+        File file = new File(SAVE_FILE);
+        if (!file.exists()) return;
+
+        try (Reader reader = new FileReader(file)) {
+            Type type = new TypeToken<Map<String, List<String>>>() {}.getType();
+            albumData = new Gson().fromJson(reader, type);
+
+            for (String albumName : albumData.keySet()) {
+                currentAlbum = albumName;
+                if (!albums.containsKey(albumName)) {
+                    JPanel panel = new JPanel(new GridLayout(0, 2, 10, 10));
+                    panel.setBackground(Color.WHITE);
+                    albums.put(albumName, panel);
+                    galleryPanel.add(new JLabel("<html><b>" + albumName + "</b></html>"));
+                    galleryPanel.add(panel);
+                }
+                for (String path : albumData.get(albumName)) {
+                    JLabel label = createImageLabelFromResource(path);
+                    albums.get(albumName).add(label);
+                }
+            }
+            galleryPanel.revalidate();
+            galleryPanel.repaint();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
