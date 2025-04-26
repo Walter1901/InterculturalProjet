@@ -47,7 +47,7 @@ public class FinanceTracker {
         // Logo area
         try {
             ImageIcon logoIcon = new ImageIcon("src/main/resources/finance/logo.png");
-            Image image = logoIcon.getImage().getScaledInstance(310, 200, Image.SCALE_SMOOTH);
+            Image image = logoIcon.getImage().getScaledInstance(300, 200, Image.SCALE_SMOOTH);
             JLabel logoLabel = new JLabel(new ImageIcon(image));
             logoLabel.setHorizontalAlignment(SwingConstants.CENTER);
             logoLabel.setBorder(new EmptyBorder(10, 0, 10, 0));
