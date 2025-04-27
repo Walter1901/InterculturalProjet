@@ -2,15 +2,28 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 public class FinanceTracker {
 
     private static CardLayout cardLayout = new CardLayout();
     private static JPanel cardPanel = new JPanel(cardLayout);
+    private static Map<String, List<String>> monthlyExpenses = new HashMap<>();
+    private static JLabel viewAllLabel;
+    private static JComboBox<String> monthCombo;
+    private static JComboBox<String> yearCombo;
+    private static JTextArea expensesArea;
 
     public static JPanel createFinanceTracker() {
+        initializeSampleData();
+
         JPanel financeApp = new JPanel(new BorderLayout());
-        financeApp.setBackground(phoneUtils.backgroundColor);
+        financeApp.setBackground(new Color(245, 245, 250));
 
         JPanel mainPanel = createMainPanel();
         JPanel expensesPanel = createExpensesPanel();
@@ -18,9 +31,201 @@ public class FinanceTracker {
         cardPanel.add(mainPanel, "main");
         cardPanel.add(expensesPanel, "expenses");
 
+        JPanel bottomNav = createBottomNavigation();
         financeApp.add(cardPanel, BorderLayout.CENTER);
+        financeApp.add(bottomNav, BorderLayout.SOUTH);
 
         return financeApp;
+    }
+
+    private static void initializeSampleData() {
+        List<String> marchExpenses = new ArrayList<>();
+        marchExpenses.add("28.03.2025  Coop, Brig       CHF13.10");
+        marchExpenses.add("28.03.2025  SBB Ticket Shop  CHF3.20-");
+        marchExpenses.add("24.03.2025  Muller, Brig     CHF3.70-");
+        monthlyExpenses.put("March 2025", marchExpenses);
+
+        String[] months = {"January", "February", "April", "May", "June",
+                "July", "August", "September", "October", "November", "December"};
+        for (String month : months) {
+            monthlyExpenses.put(month + " 2025", new ArrayList<>());
+        }
+    }
+
+    private static JPanel createExpensesPanel() {
+        JPanel expensesPanel = new JPanel(new BorderLayout());
+        expensesPanel.setBackground(new Color(245, 245, 250));
+        expensesPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
+
+        JPanel headerPanel = new JPanel(new BorderLayout());
+        headerPanel.setBackground(new Color(245, 245, 250));
+
+        JLabel titleLabel = new JLabel("My expenses", SwingConstants.LEFT);
+        titleLabel.setFont(new Font("Inter", Font.BOLD, 20));
+
+        JPanel datePanel = createDateSelectionPanel();
+
+        JPanel titlePanel = new JPanel(new BorderLayout());
+        titlePanel.add(titleLabel, BorderLayout.WEST);
+        titlePanel.add(datePanel, BorderLayout.EAST);
+        headerPanel.add(titlePanel, BorderLayout.NORTH);
+
+        JButton addButton = createAddExpenseButton();
+        headerPanel.add(addButton, BorderLayout.SOUTH);
+        expensesPanel.add(headerPanel, BorderLayout.NORTH);
+
+        expensesArea = new JTextArea();
+        expensesArea.setFont(new Font("Inter", Font.PLAIN, 14));
+        expensesArea.setEditable(false);
+        expensesArea.setBackground(Color.WHITE);
+
+        JScrollPane scrollPane = new JScrollPane(expensesArea);
+        expensesPanel.add(scrollPane, BorderLayout.CENTER);
+
+        viewAllLabel = createViewAllLabel();
+        expensesPanel.add(viewAllLabel, BorderLayout.SOUTH);
+
+        updateExpensesDisplay();
+
+        return expensesPanel;
+    }
+
+    private static JPanel createDateSelectionPanel() {
+        JPanel datePanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
+        datePanel.setBackground(new Color(245, 245, 250));
+
+        String[] months = {"January", "February", "March", "April", "May", "June",
+                "July", "August", "September", "October", "November", "December"};
+        String[] years = {"2025"};
+
+        monthCombo = new JComboBox<>(months);
+        monthCombo.setSelectedItem("March");
+        monthCombo.setFont(new Font("Inter", Font.PLAIN, 14));
+
+        yearCombo = new JComboBox<>(years);
+        yearCombo.setFont(new Font("Inter", Font.PLAIN, 14));
+
+        monthCombo.setBorder(BorderFactory.createEmptyBorder(2, 5, 2, 5));
+        yearCombo.setBorder(BorderFactory.createEmptyBorder(2, 5, 2, 5));
+
+        ActionListener dateChangeListener = e -> updateExpensesDisplay();
+        monthCombo.addActionListener(dateChangeListener);
+        yearCombo.addActionListener(dateChangeListener);
+
+        datePanel.add(monthCombo);
+        datePanel.add(yearCombo);
+
+        return datePanel;
+    }
+
+    private static JButton createAddExpenseButton() {
+        JButton addButton = new JButton("Add new expense");
+        addButton.setBackground(new Color(0, 122, 255));
+        addButton.setForeground(Color.WHITE);
+        addButton.setBorder(new EmptyBorder(5, 10, 5, 10));
+        addButton.addActionListener(e -> {
+            // Dialog für neue Ausgabe erstellen
+            JPanel panel = new JPanel(new GridLayout(3, 2));
+
+            // Aktuelles Datum im Format dd.MM.yyyy
+            String currentDate = LocalDate.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy"));
+
+            JLabel dateLabel = new JLabel("Date:");
+            JTextField dateField = new JTextField(currentDate);
+
+            JLabel descLabel = new JLabel("Description:");
+            JTextField descField = new JTextField();
+
+            JLabel amountLabel = new JLabel("Amount (CHF):");
+            JTextField amountField = new JTextField();
+
+            panel.add(dateLabel);
+            panel.add(dateField);
+            panel.add(descLabel);
+            panel.add(descField);
+            panel.add(amountLabel);
+            panel.add(amountField);
+
+            int result = JOptionPane.showConfirmDialog(null, panel,
+                    "Add New Expense", JOptionPane.OK_CANCEL_OPTION);
+
+            if (result == JOptionPane.OK_OPTION) {
+                String month = (String) monthCombo.getSelectedItem();
+                String year = (String) yearCombo.getSelectedItem();
+                String key = month + " " + year;
+
+                String newEntry = String.format("%s  %-20s CHF%s",
+                        dateField.getText(),
+                        descField.getText(),
+                        amountField.getText());
+
+                if (!monthlyExpenses.containsKey(key)) {
+                    monthlyExpenses.put(key, new ArrayList<>());
+                }
+                monthlyExpenses.get(key).add(newEntry);
+                updateExpensesDisplay();
+            }
+        });
+        return addButton;
+    }
+
+    private static JLabel createViewAllLabel() {
+        JLabel label = new JLabel("", SwingConstants.CENTER);
+        label.setForeground(new Color(0, 122, 255));
+        label.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        label.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                String month = (String) monthCombo.getSelectedItem();
+                String year = (String) yearCombo.getSelectedItem();
+                int count = monthlyExpenses.getOrDefault(month + " " + year, new ArrayList<>()).size();
+                JOptionPane.showMessageDialog(null, "Showing all " + count +
+                        " expenses for " + month + " " + year);
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                label.setForeground(new Color(0, 80, 200));
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                label.setForeground(new Color(0, 122, 255));
+            }
+        });
+        return label;
+    }
+
+    private static void updateExpensesDisplay() {
+        if (viewAllLabel == null || expensesArea == null) {
+            return;
+        }
+
+        String month = (String) monthCombo.getSelectedItem();
+        String year = (String) yearCombo.getSelectedItem();
+        String key = month + " " + year;
+
+        List<String> currentExpenses = monthlyExpenses.getOrDefault(key, new ArrayList<>());
+
+        StringBuilder sb = new StringBuilder();
+        for (String expense : currentExpenses) {
+            sb.append(expense).append("\n");
+        }
+        expensesArea.setText(sb.toString().trim());
+
+        viewAllLabel.setText("View " + currentExpenses.size() + " expenses");
+    }
+
+    private static JPanel createBottomNavigation() {
+        JPanel navPanel = new JPanel(new GridLayout(1, 3));
+        navPanel.setBackground(new Color(230, 230, 250));
+        navPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
+
+        navPanel.add(createNavButton("Home", "🏠", () -> cardLayout.show(cardPanel, "main")));
+        navPanel.add(createNavButton("Stock", "📈", () -> {}));
+        navPanel.add(createNavButton("Account", "👤", () -> {}));
+
+        return navPanel;
     }
 
     private static JPanel createMainPanel() {
@@ -37,7 +242,7 @@ public class FinanceTracker {
         // Logo
         try {
             ImageIcon logoIcon = new ImageIcon("src/main/resources/finance/logo.png");
-            Image image = logoIcon.getImage().getScaledInstance(310, 200, Image.SCALE_SMOOTH);
+            Image image = logoIcon.getImage().getScaledInstance(350, 200, Image.SCALE_SMOOTH);
             JLabel logoLabel = new JLabel(new ImageIcon(image));
             logoLabel.setHorizontalAlignment(SwingConstants.CENTER);
             logoLabel.setBorder(new EmptyBorder(10, 0, 10, 0));
@@ -61,66 +266,9 @@ public class FinanceTracker {
         menuPanel.add(Box.createRigidArea(new Dimension(0, 10)));
         menuPanel.add(createMenuItem("Investment", "📄", () -> {}));
 
-        // Bottom navigation
-        JPanel bottomNav = new JPanel(new GridLayout(1, 3));
-        bottomNav.setBackground(new Color(230, 230, 250));
-        bottomNav.setBorder(new EmptyBorder(5, 5, 5, 5));
-        bottomNav.add(createNavButton("Home", "🏠"));
-        bottomNav.add(createNavButton("Stock", "📈"));
-        bottomNav.add(createNavButton("Account", "👤"));
-
-        JPanel southPanel = new JPanel(new BorderLayout());
-        southPanel.setBackground(new Color(245, 245, 250));
-        southPanel.add(menuPanel, BorderLayout.CENTER);
-        southPanel.add(bottomNav, BorderLayout.SOUTH);
-
-        mainPanel.add(southPanel, BorderLayout.SOUTH);
+        mainPanel.add(menuPanel, BorderLayout.SOUTH);
 
         return mainPanel;
-    }
-
-    private static JPanel createExpensesPanel() {
-        JPanel expensesPanel = new JPanel(new BorderLayout());
-        expensesPanel.setBackground(new Color(245, 245, 250));
-        expensesPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
-
-        // Title
-        JLabel titleLabel = new JLabel("My Expenses", SwingConstants.CENTER);
-        titleLabel.setFont(new Font("Inter", Font.BOLD, 24));
-        titleLabel.setBorder(new EmptyBorder(0, 0, 15, 0));
-        expensesPanel.add(titleLabel, BorderLayout.NORTH);
-
-        // Expenses list
-        JTextArea expensesArea = new JTextArea();
-        expensesArea.setFont(new Font("Inter", Font.PLAIN, 14));
-        expensesArea.setText(String.join("\n",
-                "1. Rent: $1200",
-                "2. Groceries: $150",
-                "3. Utilities: $100",
-                "4. Entertainment: $50"
-        ));
-        expensesArea.setEditable(false);
-        expensesArea.setBackground(Color.WHITE);
-
-        JScrollPane scrollPane = new JScrollPane(expensesArea);
-        scrollPane.setBorder(BorderFactory.createEmptyBorder());
-        expensesPanel.add(scrollPane, BorderLayout.CENTER);
-
-        // Back button
-        JButton backButton = new JButton("Back to Home");
-        backButton.setFont(new Font("Inter", Font.PLAIN, 14));
-        backButton.setBackground(Color.WHITE);
-        backButton.setForeground(new Color(50, 50, 50));
-        backButton.addActionListener(e -> cardLayout.show(cardPanel, "main"));
-
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        buttonPanel.setBackground(new Color(245, 245, 250));
-        buttonPanel.add(backButton);
-        buttonPanel.setBorder(BorderFactory.createEmptyBorder(15, 0, 0, 0));
-
-        expensesPanel.add(buttonPanel, BorderLayout.SOUTH);
-
-        return expensesPanel;
     }
 
     private static JPanel createMenuItem(String text, String iconText, Runnable action) {
@@ -171,11 +319,12 @@ public class FinanceTracker {
         return itemPanel;
     }
 
-    private static JPanel createNavButton(String text, String icon) {
+    private static JPanel createNavButton(String text, String icon, Runnable action) {
         JPanel navButton = new JPanel();
         navButton.setLayout(new BoxLayout(navButton, BoxLayout.Y_AXIS));
         navButton.setBackground(new Color(230, 230, 250));
         navButton.setBorder(new EmptyBorder(5, 5, 5, 5));
+        navButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
         JLabel iconLabel = new JLabel(icon, SwingConstants.CENTER);
         iconLabel.setFont(new Font("Inter", Font.PLAIN, 20));
@@ -188,6 +337,23 @@ public class FinanceTracker {
         navButton.add(iconLabel);
         navButton.add(Box.createRigidArea(new Dimension(0, 5)));
         navButton.add(textLabel);
+
+        navButton.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                action.run();
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                navButton.setBackground(new Color(210, 220, 240));
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                navButton.setBackground(new Color(230, 230, 250));
+            }
+        });
 
         return navButton;
     }
