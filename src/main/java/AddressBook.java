@@ -110,7 +110,6 @@ public class AddressBook {
 
             setBorder(BorderFactory.createEmptyBorder(5,5,5,5));
         }
-
         @Override
         public Component getListCellRendererComponent(JList<? extends Contact> list, Contact contact, int index,
                                                       boolean isSelected, boolean cellHasFocus) {
