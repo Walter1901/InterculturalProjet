@@ -1,7 +1,6 @@
 import javax.swing.*;
 import java.awt.*;
 
-
 public class Homescreen extends phoneUtils{
 
     public static CardLayout cardLayout = new CardLayout();
@@ -29,7 +28,6 @@ public class Homescreen extends phoneUtils{
         // Add Finance Tracker screen
         JPanel financeTrackerScreen = FinanceTracker.createFinanceTracker();
         mainPanel.add(financeTrackerScreen, "Finance Tracker");
-
 
         phoneFrame.add(mainPanel, BorderLayout.CENTER);
         phoneFrame.add(phoneUtils.createTopBar(), BorderLayout.NORTH);
