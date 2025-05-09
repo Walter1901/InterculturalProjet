@@ -1,5 +1,7 @@
 import javax.swing.*;
 import java.awt.*;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Timer;
@@ -29,35 +31,62 @@ public class phoneUtils {
 
     // Method to create the top bar (time and battery)
     public static JPanel createTopBar() {
-        JPanel timeAndDatePanel = new JPanel();
-        timeAndDatePanel.setPreferredSize(new Dimension(SCREEN_WIDTH, 30));
-        timeAndDatePanel.setLayout(new BorderLayout());
-        timeAndDatePanel.setBackground(backgroundColor);
+        JPanel topBar = new JPanel();
+        topBar.setPreferredSize(new Dimension(SCREEN_WIDTH, 30));
+        topBar.setLayout(new BorderLayout());
+        topBar.setBackground(backgroundColor);
 
         JLabel timeLabel = new JLabel();
         timeLabel.setForeground(textColor);
         timeLabel.setFont(new Font("Inter", Font.BOLD, 14));
         timeLabel.setBorder(BorderFactory.createEmptyBorder(0, 30, 0, 0));
-        timeAndDatePanel.add(timeLabel, BorderLayout.WEST);
+        topBar.add(timeLabel, BorderLayout.WEST);
+
+        JLabel batteryStatus = new JLabel();
+        batteryStatus.setForeground(textColor);
+        batteryStatus.setFont(new Font("Inter", Font.BOLD, 14));
+        batteryStatus.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 30));
+        topBar.add(batteryStatus, BorderLayout.EAST);
 
         Timer timer = new Timer();
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
                 SwingUtilities.invokeLater(() -> {
+                    // Mettre à jour l'heure
                     String currentTime = new SimpleDateFormat("HH:mm").format(new Date());
                     timeLabel.setText(currentTime);
+
+                    // Mettre à jour la batterie
+                    int battery = getWindowsBatteryPercentage();
+                    if (battery >= 0) {
+                        batteryStatus.setText("🔋 " + battery + "%");
+                    } else {
+                        batteryStatus.setText("🔋 N/A");
+                    }
                 });
             }
         }, 0, 3000);
 
-        JLabel batteryStatus = new JLabel("🔋 100%");
-        batteryStatus.setForeground(textColor);
-        batteryStatus.setFont(new Font("Inter", Font.BOLD, 14));
-        batteryStatus.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 30));
-        timeAndDatePanel.add(batteryStatus, BorderLayout.EAST);
+        return topBar;
+    }
 
-        return timeAndDatePanel;
+    private static int getWindowsBatteryPercentage() {
+        try {
+            Process process = Runtime.getRuntime().exec("WMIC Path Win32_Battery Get EstimatedChargeRemaining");
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                line = line.trim();
+                if (!line.isEmpty() && line.matches("\\d+")) {
+                    return Integer.parseInt(line);
+                }
+            }
+            process.waitFor();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return -1;
     }
 
     // Method to create the bottom bar
