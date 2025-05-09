@@ -136,13 +136,13 @@ public class PictureGallery {
         if (selected != null) {
             JLabel imgLabel = createImageLabelFromResource(selected);
 
-            // On ajoute TOUJOURS dans le Main Gallery ("default")
+
             JPanel mainGalleryPanel = albums.get("default");
             mainGalleryPanel.add(imgLabel);
             mainGalleryPanel.revalidate();
             mainGalleryPanel.repaint();
 
-            // On ajoute dans les données de l’album "default"
+
             albumData.get("default").add(selected);
 
             saveGallery();
@@ -443,7 +443,7 @@ public class PictureGallery {
                 break;
             case "None":
             default:
-                // Aucun filtre, on remet l’original
+
                 break;
         }
 
