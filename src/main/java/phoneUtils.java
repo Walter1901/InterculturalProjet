@@ -147,7 +147,7 @@ public class phoneUtils {
         return appButton;
     }
 
-    public static JFrame createHomescreen(){
+    public static void createHomescreen(){
 
         // Create the main phone frame
         JFrame phoneFrame = phoneUtils.createPhoneFrame("The Phone");
@@ -177,7 +177,6 @@ public class phoneUtils {
         phoneFrame.add(phoneUtils.createBottomBar(phoneFrame), BorderLayout.SOUTH);
         phoneFrame.setVisible(true);
 
-        return phoneFrame;
     }
 
 }
