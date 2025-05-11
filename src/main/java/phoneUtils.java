@@ -199,7 +199,8 @@ public class phoneUtils {
         mainPanel.add(addressBookScreen, "Address Book");
 
         // Add Picture Gallery screen
-        JPanel pictureGalleryScreen = PictureGallery.createPictureGallery();
+        PictureGallery pictureGallery = new PictureGallery(); // Crée une instance
+        JPanel pictureGalleryScreen = pictureGallery.createPictureGallery(); // Appelle la méthode sur l'instance
         mainPanel.add(pictureGalleryScreen, "Picture Gallery");
 
         // Add Finance Tracker screen
