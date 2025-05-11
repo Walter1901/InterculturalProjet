@@ -12,16 +12,24 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.util.*;
 import java.util.List;
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartPanel;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.plot.PiePlot;
+import org.jfree.chart.title.LegendTitle;
+import org.jfree.data.general.DefaultPieDataset;
 
 
 public class InvestifyApp {
+
+    public static String portfolioValue = "0.00 $";
 
     public static JPanel createInvestify() {
 
         // =====API config=====
         Config cfg = Config.builder()
-                .key("JFFZ9TYUYT8VISEK")
-                .timeOut(10)
+                .key("9RD5X05ALZ59WA9E")
+                .timeOut(30)
                 .build();
 
         AlphaVantage.api().init(cfg);
@@ -32,79 +40,44 @@ public class InvestifyApp {
         // =========================
 
         // =====Home panel=====
-        JPanel homeMain = new JPanel(new GridBagLayout()); //Creates the main panel that has the "grid bag layout"
+        JPanel homeMain = new JPanel(new GridBagLayout());
         homeMain.setBackground(phoneUtils.backgroundColor);
 
-        GridBagConstraints gbcHome = new GridBagConstraints();//Creates constraints
+        GridBagConstraints gbcHome = new GridBagConstraints();
         gbcHome.gridx = 0;
         gbcHome.gridwidth = 1;
         gbcHome.fill = GridBagConstraints.NONE;
         gbcHome.anchor = GridBagConstraints.NORTH;
-        gbcHome.insets = new Insets(5, 0, 5, 0); //sets a margin between the labels
+        gbcHome.insets = new Insets(5, 0, 5, 0);
 
-        JLabel titlePortfolio = new JLabel("Portfolio"); //title at the top of the panel
+        JLabel titlePortfolio = new JLabel("Portfolio");
         titlePortfolio.setForeground(phoneUtils.textColor);
         titlePortfolio.setFont(new Font("Inter", Font.BOLD, 32));
-        gbcHome.gridy = 0; // 0 because it will be the very first text at the top
+        gbcHome.gridy = 0;
         homeMain.add(titlePortfolio, gbcHome);
 
-        JLabel subtitle1 = new JLabel(portfolioValue); //subtitle below the title holds the value of user's stock portfolio
+        // D'abord, calculer la valeur du portfolio en appelant createPieChartPanel()
+        // Création d'une version temporaire pour le calcul uniquement
+        createPieChartPanel();
+
+        // APRÈS avoir appelé createPieChartPanel(), créer le JLabel avec la valeur mise à jour
+        JLabel subtitle1 = new JLabel("Total value: " + portfolioValue);
         subtitle1.setForeground(phoneUtils.textColor);
-        subtitle1.setFont(new Font("Inter", Font.PLAIN, 21));
-        gbcHome.gridy = 1; // 1 because it one level below the title
+        subtitle1.setFont(new Font("Inter", Font.BOLD, 24));
+        gbcHome.gridy = 1;
+        gbcHome.insets = new Insets(5, 0, 15, 0);
         homeMain.add(subtitle1, gbcHome);
 
-        JPanel graphPlaceholder = new JPanel(); //Graph of past value of user's portfolio
-        graphPlaceholder.setPreferredSize(new Dimension(150, 200));
-        graphPlaceholder.setBackground(Color.DARK_GRAY);
+        gbcHome.insets = new Insets(5, 0, 5, 0);
+
+        // Création du vrai panel de graphique pour l'affichage
+        JPanel pieChartPanel = createPieChartPanel();
         gbcHome.gridy = 2;
         gbcHome.fill = GridBagConstraints.BOTH;
         gbcHome.weighty = 1;
-        homeMain.add(graphPlaceholder, gbcHome);
+        homeMain.add(pieChartPanel, gbcHome);
 
-        JLabel subtitleUnderGraph = new JLabel("Change view:"); //subtitle below the title holds the value of user's portfolio
-        subtitleUnderGraph.setForeground(phoneUtils.textColor);
-        subtitleUnderGraph.setFont(new Font("Inter", Font.PLAIN, 18));
-        gbcHome.gridy = 3; // 1 because it one level below the title
-        homeMain.add(subtitleUnderGraph, gbcHome);
-
-        gbcHome.gridy = 4;
-        JPanel changeViewPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 7, 0));
-        changeViewPanel.setBackground(phoneUtils.backgroundColor);
-
-        String[] buttonLabels = {"1D", "1W", "1M", "YTD", "MAX"};
-        for (String label : buttonLabels) { // for each string in the array do the following:
-            JButton btn = new JButton(label);
-            btn.setBackground(phoneUtils.backgroundColor);
-            btn.setFocusPainted(false);
-            btn.setFont(new Font("Inter", Font.PLAIN, 14));
-            btn.setForeground(phoneUtils.textColor);
-            changeViewPanel.add(btn);
-
-            btn.addActionListener(e -> {
-                switch (label) {
-                    case "1D":
-                        System.out.println("Button 1D ");
-                        break;
-                    case "1W":
-                        System.out.println("Button 1W ");
-                        break;
-                    case "1M":
-                        System.out.println("Button 1M ");
-                        break;
-                    case "YTD":
-                        System.out.println("Button YTD ");
-                        break;
-                    case "MAX":
-                        System.out.println("Button MAX ");
-                        break;
-                }
-
-            });
-            homeMain.add(changeViewPanel, gbcHome);
-        }
-
-        gbcHome.gridy = 5;
+        gbcHome.gridy = 3; // Position ajustée pour la navbar
         gbcHome.fill = GridBagConstraints.HORIZONTAL;
         gbcHome.weighty = 0;
         gbcHome.anchor = GridBagConstraints.SOUTH;
@@ -635,6 +608,103 @@ public class InvestifyApp {
         dialog.setVisible(true);
     }
 
-    public static String portfolioValue;
+    private static JPanel createPieChartPanel() {
+        JPanel chartPanel = new JPanel(new BorderLayout());
+        chartPanel.setBackground(phoneUtils.backgroundColor);
+        chartPanel.setPreferredSize(new Dimension(300, 200));
+
+        // Récupérer les données du portfolio
+        String filePath = System.getProperty("user.home") + "/investifyData.json";
+        File file = new File(filePath);
+
+        if (file.exists()) {
+            try (FileReader reader = new FileReader(file)) {
+                Gson gson = new Gson();
+                Transaction[] transactions = gson.fromJson(reader, Transaction[].class);
+
+                if (transactions != null && transactions.length > 0) {
+                    // Calculer la répartition des actions
+                    Map<String, Double> holdings = new HashMap<>();
+
+                    for (Transaction transaction : transactions) {
+                        String symbol = transaction.getSymbol();
+                        int quantity = transaction.getQuantity();
+                        double price = transaction.getPrice();
+                        boolean isBuy = transaction.getAction().equalsIgnoreCase("Buy");
+
+                        double transactionValue = quantity * price;
+
+                        if (isBuy) {
+                            holdings.put(symbol, holdings.getOrDefault(symbol, 0.0) + transactionValue);
+                        } else {
+                            holdings.put(symbol, holdings.getOrDefault(symbol, 0.0) - transactionValue);
+                        }
+                    }
+
+                    // Filtrer les actions avec une valeur positive
+                    holdings.entrySet().removeIf(entry -> entry.getValue() <= 0);
+
+                    if (!holdings.isEmpty()) {
+                        // Créer le dataset pour le graphique
+                        DefaultPieDataset dataset = new DefaultPieDataset();
+
+                        for (Map.Entry<String, Double> entry : holdings.entrySet()) {
+                            dataset.setValue(entry.getKey(), entry.getValue());
+                        }
+
+                        // Créer le graphique
+                        JFreeChart chart = ChartFactory.createPieChart(
+                                null, // Pas de titre, nous avons déjà un titre au-dessus
+                                dataset,
+                                true, // Afficher la légende
+                                false, // Pas d'info-bulles
+                                false // Pas d'URLs
+                        );
+
+                        // Personnaliser l'apparence du graphique
+                        chart.setBackgroundPaint(phoneUtils.backgroundColor);
+
+                        PiePlot plot = (PiePlot) chart.getPlot();
+                        plot.setBackgroundPaint(phoneUtils.backgroundColor);
+                        plot.setOutlinePaint(null);
+                        plot.setLabelOutlinePaint(null);
+                        plot.setLabelShadowPaint(null);
+                        plot.setLabelBackgroundPaint(null);
+                        plot.setLabelFont(new Font("Inter", Font.PLAIN, 12));
+                        plot.setLabelPaint(phoneUtils.textColor);
+
+                        // Légende
+                        LegendTitle legend = chart.getLegend();
+                        legend.setBackgroundPaint(phoneUtils.backgroundColor);
+                        legend.setItemFont(new Font("Inter", Font.PLAIN, 12));
+                        legend.setItemPaint(phoneUtils.textColor);
+
+                        // Ajouter le graphique au panel
+                        ChartPanel chartComponent = new ChartPanel(chart);
+                        chartComponent.setPreferredSize(new Dimension(280, 180));
+                        chartComponent.setBackground(phoneUtils.backgroundColor);
+                        chartPanel.add(chartComponent, BorderLayout.CENTER);
+
+                        // Calculer la valeur totale du portfolio
+                        double totalValue = holdings.values().stream().mapToDouble(Double::doubleValue).sum();
+                        portfolioValue = String.format("%.2f $", totalValue);
+
+                        return chartPanel;
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        // Si aucune donnée disponible, afficher un panneau vide
+        JLabel noDataLabel = new JLabel("No portfolio data available", SwingConstants.CENTER);
+        noDataLabel.setForeground(phoneUtils.textColor);
+        noDataLabel.setFont(new Font("Inter", Font.PLAIN, 16));
+        chartPanel.add(noDataLabel, BorderLayout.CENTER);
+
+        portfolioValue = "0.00 $";
+        return chartPanel;
+    }
 
 }
