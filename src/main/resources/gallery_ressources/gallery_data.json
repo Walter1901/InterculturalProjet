@@ -1,0 +1,84 @@
+{
+  "galleryName": "My Photo Gallery",
+  "version": "1.0",
+  "lastUpdated": "2025-05-09",
+  "description": "A collection of beautiful photographs",
+  "categories": [
+    {
+      "id": "nature",
+      "name": "Nature",
+      "description": "Stunning landscapes and wildlife"
+    },
+    {
+      "id": "architecture",
+      "name": "Architecture",
+      "description": "Beautiful buildings and structures"
+    },
+    {
+      "id": "portrait",
+      "name": "Portraits",
+      "description": "Captivating people photography"
+    }
+  ],
+  "images": [
+    {
+      "id": "img001",
+      "filename": "photo1.jpg",
+      "title": "Mountain Sunrise",
+      "description": "Sunrise over mountain peaks",
+      "category": "nature",
+      "tags": ["mountains", "sunrise", "landscape"],
+      "dateAdded": "2025-01-15",
+      "featured": true
+    },
+    {
+      "id": "img002",
+      "filename": "photo2.jpg",
+      "title": "Modern Skyscraper",
+      "description": "A sleek modern skyscraper against blue sky",
+      "category": "architecture",
+      "tags": ["building", "city", "modern"],
+      "dateAdded": "2025-02-03",
+      "featured": false
+    },
+    {
+      "id": "img003",
+      "filename": "photo3.jpg",
+      "title": "Forest Path",
+      "description": "Sunlight streaming through trees on a forest path",
+      "category": "nature",
+      "tags": ["forest", "path", "sunlight"],
+      "dateAdded": "2025-02-28",
+      "featured": true
+    },
+    {
+      "id": "img004",
+      "filename": "photo4.jpg",
+      "title": "Portrait Study",
+      "description": "Black and white portrait of an elderly person",
+      "category": "portrait",
+      "tags": ["black and white", "elderly", "portrait"],
+      "dateAdded": "2025-03-12",
+      "featured": false
+    },
+    {
+      "id": "img005",
+      "filename": "photo5.jpg",
+      "title": "Historic Cathedral",
+      "description": "Interior of a gothic cathedral with stained glass",
+      "category": "architecture",
+      "tags": ["cathedral", "gothic", "interior"],
+      "dateAdded": "2025-04-05",
+      "featured": true
+    }
+  ],
+  "settings": {
+    "thumbnailSize": {
+      "width": 200,
+      "height": 150
+    },
+    "fullsizeMaxWidth": 1200,
+    "defaultCategory": "nature",
+    "slideshowDelay": 5000
+  }
+}
