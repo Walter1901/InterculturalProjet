@@ -117,7 +117,7 @@ public class FinanceTracker {
     }
 
     private static JButton createAddExpenseButton() {
-        JButton addButton = new JButton("Add new expense");
+        JButton addButton = new JButton("Add new Expense");
         addButton.setBackground(new Color(0, 122, 255));
         addButton.setForeground(Color.WHITE);
         addButton.setBorder(new EmptyBorder(5, 10, 5, 10));
