@@ -14,13 +14,17 @@ public class FinanceTracker {
     private static CardLayout cardLayout = new CardLayout();
     private static JPanel cardPanel = new JPanel(cardLayout);
     private static Map<String, List<String>> monthlyExpenses = new HashMap<>();
+    private static final Map<String, Double> monthlyBalances = new HashMap<>();
     private static JLabel viewAllLabel;
     private static JComboBox<String> monthCombo;
     private static JComboBox<String> yearCombo;
     private static JTextArea expensesArea;
+    private static JTextArea balanceArea;
+    private static JComboBox<String> balanceMonthCombo;
+    private static JComboBox<String> balanceYearCombo;
+
 
     public static JPanel createFinanceTracker() {
-        initializeSampleData();
 
         JPanel financeApp = new JPanel(new BorderLayout());
         financeApp.setBackground(new Color(245, 245, 250));
@@ -35,21 +39,11 @@ public class FinanceTracker {
         financeApp.add(cardPanel, BorderLayout.CENTER);
         financeApp.add(bottomNav, BorderLayout.SOUTH);
 
+        JPanel balancePanel = createBalancePanel();
+        cardPanel.add(balancePanel, "balance");
+
+
         return financeApp;
-    }
-
-    private static void initializeSampleData() {
-        List<String> marchExpenses = new ArrayList<>();
-        marchExpenses.add("28.03.2025  Coop, Brig       CHF13.10");
-        marchExpenses.add("28.03.2025  SBB Ticket Shop  CHF3.20-");
-        marchExpenses.add("24.03.2025  Muller, Brig     CHF3.70-");
-        monthlyExpenses.put("March 2025", marchExpenses);
-
-        String[] months = {"January", "February", "April", "May", "June",
-                "July", "August", "September", "October", "November", "December"};
-        for (String month : months) {
-            monthlyExpenses.put(month + " 2025", new ArrayList<>());
-        }
     }
 
     private static JPanel createExpensesPanel() {
@@ -74,10 +68,13 @@ public class FinanceTracker {
         headerPanel.add(addButton, BorderLayout.SOUTH);
         expensesPanel.add(headerPanel, BorderLayout.NORTH);
 
+        // JTextArea mit Zeilenumbruch aktivieren
         expensesArea = new JTextArea();
         expensesArea.setFont(new Font("Inter", Font.PLAIN, 14));
         expensesArea.setEditable(false);
         expensesArea.setBackground(Color.WHITE);
+        expensesArea.setLineWrap(true);  // Zeilenumbruch aktivieren
+        expensesArea.setWrapStyleWord(true);  // Wortweise umbrechen
 
         JScrollPane scrollPane = new JScrollPane(expensesArea);
         expensesPanel.add(scrollPane, BorderLayout.CENTER);
@@ -90,13 +87,14 @@ public class FinanceTracker {
         return expensesPanel;
     }
 
+
     private static JPanel createDateSelectionPanel() {
         JPanel datePanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
         datePanel.setBackground(new Color(245, 245, 250));
 
         String[] months = {"January", "February", "March", "April", "May", "June",
                 "July", "August", "September", "October", "November", "December"};
-        String[] years = {"2025"};
+        String[] years = {"2024", "2025"};
 
         monthCombo = new JComboBox<>(months);
         monthCombo.setSelectedItem("March");
@@ -119,7 +117,7 @@ public class FinanceTracker {
     }
 
     private static JButton createAddExpenseButton() {
-        JButton addButton = new JButton("Add new expense");
+        JButton addButton = new JButton("Add new Expense");
         addButton.setBackground(new Color(0, 122, 255));
         addButton.setForeground(Color.WHITE);
         addButton.setBorder(new EmptyBorder(5, 10, 5, 10));
@@ -150,20 +148,38 @@ public class FinanceTracker {
                     "Add New Expense", JOptionPane.OK_CANCEL_OPTION);
 
             if (result == JOptionPane.OK_OPTION) {
-                String month = (String) monthCombo.getSelectedItem();
-                String year = (String) yearCombo.getSelectedItem();
-                String key = month + " " + year;
+                try {
+                    // Datum parsen
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+                    LocalDate expenseDate = LocalDate.parse(dateField.getText(), formatter);
 
-                String newEntry = String.format("%s  %-20s CHF%s",
-                        dateField.getText(),
-                        descField.getText(),
-                        amountField.getText());
+                    // Monat und Jahr aus dem Datum extrahieren
+                    String month = expenseDate.getMonth().toString();
+                    month = month.charAt(0) + month.substring(1).toLowerCase(); // "MARCH" -> "March"
+                    String year = String.valueOf(expenseDate.getYear());
+                    String key = month + " " + year;
 
-                if (!monthlyExpenses.containsKey(key)) {
-                    monthlyExpenses.put(key, new ArrayList<>());
+                    // Formatierter Eintrag mit fester Breite
+                    String newEntry = String.format("%-12s  %-25s CHF%10.2f",
+                            dateField.getText(),
+                            descField.getText(),
+                            Double.parseDouble(amountField.getText()));
+
+                    if (!monthlyExpenses.containsKey(key)) {
+                        monthlyExpenses.put(key, new ArrayList<>());
+                    }
+                    monthlyExpenses.get(key).add(newEntry);
+
+                    // Dropdowns auf das Datum der neuen Ausgabe setzen
+                    monthCombo.setSelectedItem(month);
+                    yearCombo.setSelectedItem(year);
+
+                    updateExpensesDisplay();
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(null,
+                            "Invalid input. Please check date format (dd.MM.yyyy) and amount.",
+                            "Error", JOptionPane.ERROR_MESSAGE);
                 }
-                monthlyExpenses.get(key).add(newEntry);
-                updateExpensesDisplay();
             }
         });
         return addButton;
@@ -196,10 +212,186 @@ public class FinanceTracker {
         return label;
     }
 
+    private static JPanel createBalancePanel() {
+        JPanel balancePanel = new JPanel(new BorderLayout());
+        balancePanel.setBackground(new Color(245, 245, 250));
+        balancePanel.setBorder(new EmptyBorder(15, 15, 15, 15));
+
+        JPanel headerPanel = new JPanel(new BorderLayout());
+        headerPanel.setBackground(new Color(245, 245, 250));
+
+        JLabel title = new JLabel("Balance overview");
+        title.setFont(new Font("Inter", Font.BOLD, 15));
+        title.setBorder(new EmptyBorder(0, 0, 10, 0));
+
+        // Datumsauswahl
+        JPanel datePanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
+        datePanel.setBackground(new Color(245, 245, 250));
+
+        String[] months = {"January", "February", "March", "April", "May", "June",
+                "July", "August", "September", "October", "November", "December"};
+        String[] years = {"2024", "2025"};
+
+        JComboBox<String> balanceMonthCombo = new JComboBox<>(months);
+        JComboBox<String> balanceYearCombo = new JComboBox<>(years);
+        balanceMonthCombo.setFont(new Font("Inter", Font.PLAIN, 14));
+        balanceYearCombo.setFont(new Font("Inter", Font.PLAIN, 14));
+
+        datePanel.add(balanceMonthCombo);
+        datePanel.add(balanceYearCombo);
+
+        // Setze aktuellen Monat und Jahr als Standardauswahl
+        LocalDate now = LocalDate.now();
+        balanceMonthCombo.setSelectedIndex(now.getMonthValue() - 1); // 0-basiert
+        balanceYearCombo.setSelectedItem(String.valueOf(now.getYear()));
+
+        headerPanel.add(title, BorderLayout.WEST);
+        headerPanel.add(datePanel, BorderLayout.EAST);
+
+        balancePanel.add(headerPanel, BorderLayout.NORTH);
+
+        balanceArea = new JTextArea();
+        balanceArea.setFont(new Font("Inter", Font.PLAIN, 14));
+        balanceArea.setEditable(false);
+        balanceArea.setBackground(Color.WHITE);
+        JScrollPane scrollPane = new JScrollPane(balanceArea);
+        balancePanel.add(scrollPane, BorderLayout.CENTER);
+
+        // Listener für Änderungen am Monat
+        balanceMonthCombo.addItemListener(e -> updateBalanceArea(balanceArea, balanceMonthCombo, balanceYearCombo));
+
+        // Listener für Änderungen am Jahr
+        balanceYearCombo.addItemListener(e -> updateBalanceArea(balanceArea, balanceMonthCombo, balanceYearCombo));
+
+        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        bottomPanel.setBackground(new Color(245, 245, 250));
+
+        // Button für Ausgaben
+        JButton addExpenseButton = new JButton("Add expense");
+        addExpenseButton.setBackground(new Color(0, 122, 255));
+        addExpenseButton.setForeground(Color.WHITE);
+        addExpenseButton.addActionListener(e -> {
+            JPanel inputPanel = new JPanel(new GridLayout(2, 2));
+            inputPanel.add(new JLabel("Description:"));
+            JTextField descField = new JTextField();
+            inputPanel.add(descField);
+            inputPanel.add(new JLabel("Amount (CHF):"));
+            JTextField amountField = new JTextField();
+            inputPanel.add(amountField);
+
+            int result = JOptionPane.showConfirmDialog(null, inputPanel,
+                    "Add Expense Entry", JOptionPane.OK_CANCEL_OPTION);
+
+            if (result == JOptionPane.OK_OPTION) {
+                try {
+                    String month = (String) balanceMonthCombo.getSelectedItem();
+                    String year = (String) balanceYearCombo.getSelectedItem();
+                    String key = month + " " + year;
+
+                    String entry = String.format("%-25s %10s", descField.getText(), "CHF" + amountField.getText());
+
+                    if (!monthlyExpenses.containsKey(key)) {
+                        monthlyExpenses.put(key, new ArrayList<>());
+                    }
+                    monthlyExpenses.get(key).add(entry);
+
+                    updateBalanceArea(balanceArea, balanceMonthCombo, balanceYearCombo);
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(null, "Invalid input", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        });
+
+        // Button für Kontostand
+        JButton enterBalanceButton = new JButton("Enter account balance");
+        enterBalanceButton.setBackground(new Color(0, 122, 255));
+        enterBalanceButton.setForeground(Color.WHITE);
+        enterBalanceButton.addActionListener(e -> {
+            String month = (String) balanceMonthCombo.getSelectedItem();
+            String year = (String) balanceYearCombo.getSelectedItem();
+            String key = month + " " + year;
+
+            String input = JOptionPane.showInputDialog(null,
+                    "Enter your account balance for " + key + ":", "Account Balance",
+                    JOptionPane.PLAIN_MESSAGE);
+
+            if (input != null && !input.trim().isEmpty()) {
+                try {
+                    double balance = Double.parseDouble(input.trim());
+                    monthlyBalances.put(key, balance);
+                    updateBalanceArea(balanceArea, balanceMonthCombo, balanceYearCombo);
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(null, "Invalid number format", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        });
+
+        // Button zum Aktualisieren
+        JButton refreshButton = new JButton("Refresh overview");
+        refreshButton.setBackground(new Color(0, 122, 255));
+        refreshButton.setForeground(Color.WHITE);
+        refreshButton.addActionListener(e -> updateBalanceArea(balanceArea, balanceMonthCombo, balanceYearCombo));
+
+        bottomPanel.add(addExpenseButton);
+        bottomPanel.add(enterBalanceButton);
+        bottomPanel.add(refreshButton);
+        balancePanel.add(bottomPanel, BorderLayout.SOUTH);
+
+        updateBalanceArea(balanceArea, balanceMonthCombo, balanceYearCombo);
+        return balancePanel;
+    }
+
+    private static void updateBalanceArea(JTextArea balanceArea, JComboBox<String> monthCombo, JComboBox<String> yearCombo) {
+        String month = (String) monthCombo.getSelectedItem();
+        String year = (String) yearCombo.getSelectedItem();
+        String key = month + " " + year;
+
+        // Monospaced Font für exakte Ausrichtung
+        balanceArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 14));
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(String.format("Balance Overview for %s%n%n", key));
+
+        // Kontostand
+        double balance = monthlyBalances.getOrDefault(key, 0.0);
+        sb.append(String.format("%-20s CHF%10.2f%n", "Account Balance:", balance));
+        sb.append("\n");
+
+        // Berechne Gesamtausgaben
+        List<String> expenses = monthlyExpenses.getOrDefault(key, new ArrayList<>());
+        double totalExpenses = 0.0;
+        for (String entry : expenses) {
+            try {
+                // Extrahiere den Betrag aus dem Eintrag
+                int chfIndex = entry.indexOf("CHF");
+                if (chfIndex >= 0) {
+                    String amountStr = entry.substring(chfIndex + 3).trim();
+                    amountStr = amountStr.replace(".", "").replace(",", ".");  // Entfernt Tausenderpunkt, ersetzt Komma durch Punkt
+                    totalExpenses += Double.parseDouble(amountStr);
+
+                }
+            } catch (Exception ex) {
+                System.err.println("Error parsing amount from entry: " + entry);
+                ex.printStackTrace();
+            }
+        }
+
+        // Nur das Total anzeigen
+        sb.append(String.format("%-20s CHF%10.2f%n", "Total Expenses:", totalExpenses));
+
+        double remaining = balance - totalExpenses;
+        sb.append(String.format("%-20s CHF%10.2f%n", "Remaining Balance:", remaining));
+
+        balanceArea.setText(sb.toString());
+    }
+
     private static void updateExpensesDisplay() {
         if (viewAllLabel == null || expensesArea == null) {
             return;
         }
+
+        // Monospaced Font für exakte Ausrichtung
+        expensesArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 14));
 
         String month = (String) monthCombo.getSelectedItem();
         String year = (String) yearCombo.getSelectedItem();
@@ -209,10 +401,21 @@ public class FinanceTracker {
 
         StringBuilder sb = new StringBuilder();
         for (String expense : currentExpenses) {
-            sb.append(expense).append("\n");
-        }
-        expensesArea.setText(sb.toString().trim());
+            // Teile den Eintrag in Datum, Beschreibung und Betrag auf
+            String[] parts = expense.split("CHF");
+            String dateAndDesc = parts[0].trim();
+            String amount = parts.length > 1 ? "CHF" + parts[1].trim() : "CHF0.00";
 
+            // Finde die Position des letzten Leerzeichens, um Datum und Beschreibung zu trennen
+            int lastSpace = dateAndDesc.lastIndexOf("  ");
+            String date = lastSpace >= 0 ? dateAndDesc.substring(0, lastSpace).trim() : "";
+            String description = lastSpace >= 0 ? dateAndDesc.substring(lastSpace).trim() : dateAndDesc;
+
+            // Formatierte Ausgabe mit fester Breite
+            sb.append(String.format("%-12s %-25s %10s%n", date, description, amount));
+        }
+
+        expensesArea.setText(sb.toString().trim());
         viewAllLabel.setText("View " + currentExpenses.size() + " expenses");
     }
 
@@ -260,7 +463,11 @@ public class FinanceTracker {
 
         menuPanel.add(createMenuItem("My expenses", " $", () -> cardLayout.show(cardPanel, "expenses")));
         menuPanel.add(Box.createRigidArea(new Dimension(0, 10)));
-        menuPanel.add(createMenuItem("Balance overview", "📈", () -> {}));
+        menuPanel.add(createMenuItem("Balance overview", "📈", () -> {
+            cardLayout.show(cardPanel, "balance");
+            // automatisches Update beim Wechsel
+            updateBalanceArea(balanceArea, balanceMonthCombo, balanceYearCombo);
+        }));
         menuPanel.add(Box.createRigidArea(new Dimension(0, 10)));
         menuPanel.add(createMenuItem("Saving goals", "🎯", () -> {}));
         menuPanel.add(Box.createRigidArea(new Dimension(0, 10)));
