@@ -1,17 +1,28 @@
-# Our Awesome Project
+# Smartphone Group 1
 
-Authors: TBD
+Authors (Students): Arnaud Schriber (Address book App), Walter Fernandes Gonçalves (Picture Gallery App), 
+Rojin Dalir Kanesbi (Finance Tracker App) & André Santos Leal (Investify App)
+
+Teachers for technical skills :
+Jean-Luc Beuchat, Fabian Cretton and David Russo
+
+Teachers for English communication skills :
+Stéphanie Bertherat and Glene Ribeiro
 
 ## Our Project in a Nutshell
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
-incididunt ut labore et dolore magna aliqua. Malesuada bibendum arcu vitae
-elementum curabitur vitae. Cursus turpis massa tincidunt dui. Scelerisque
-eleifend donec pretium vulputate sapien nec. Sed vulputate mi sit amet mauris
-commodo. Turpis egestas sed tempus urna et pharetra pharetra massa massa.
-Ultrices eros in cursus turpis massa tincidunt dui ut ornare. Amet consectetur
-adipiscing elit duis tristique sollicitudin nibh. Semper feugiat nibh sed
-pulvinar proin gravida hendrerit lectus. In mollis nunc sed id.
+### The project recreates a smartphone experience in Java, offering four practical applications that are ready to use.
+
+1. Picture Gallery – The Gallery application is an essential tool for managing and enhancing photos with ease.
+It allows users to store, organize, and edit images effortlessly, providing features like resizing, filtering, and compression for optimal customization.
+Designed for seamless interaction, Gallery integrates directly with Address Book, enabling users to assign profile pictures to their contacts, 
+making personal connections more visual and engaging. Whether preserving memories, enhancing images, or linking photos to contacts, 
+Gallery delivers an intuitive and connected experience within the smartphone ecosystem.
+2. Address Book – 
+
+3. Finance Tracker – 
+
+4. Investify – 
 
 ## How to Build our Project
 

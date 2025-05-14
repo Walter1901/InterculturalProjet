@@ -167,7 +167,12 @@ public class phoneUtils {
                     Homescreen.cardLayout.show(Homescreen.mainPanel, "Address Book");
                     break;
                 case "Picture Gallery":
-                    Homescreen.cardLayout.show(Homescreen.mainPanel, "Picture Gallery");
+                    TinyPNGService tinyPNGService = new TinyPNGService();
+                    boolean apiKeyOk = tinyPNGService.showApiKeyDialog(parentFrame);
+                    if (apiKeyOk) {
+                        Homescreen.cardLayout.show(Homescreen.mainPanel, "Picture Gallery");
+                    }
+                    // If not ok, do nothing (user cancelled or invalid key)
                     break;
                 case "Finance Tracker":
                     Homescreen.cardLayout.show(Homescreen.mainPanel, "Finance Tracker");
@@ -199,8 +204,8 @@ public class phoneUtils {
         mainPanel.add(addressBookScreen, "Address Book");
 
         // Add Picture Gallery screen
-        PictureGallery pictureGallery = new PictureGallery(); // Crée une instance
-        JPanel pictureGalleryScreen = pictureGallery.createPictureGallery(); // Appelle la méthode sur l'instance
+        PictureGallery pictureGallery = new PictureGallery();
+        JPanel pictureGalleryScreen = pictureGallery.createPictureGallery();
         mainPanel.add(pictureGalleryScreen, "Picture Gallery");
 
         // Add Finance Tracker screen
