@@ -1,1 +1,24 @@
-{"albumData":{"default":["/imageGallery/SEAT_LEON_2_compressed.jpg","/imageGallery/SEAT_LEON_2_compressed.jpg","/imageGallery/SEAT_LEON_7_compressed.jpg","/imageGallery/SEAT_LEON_compressed_compressed.jpg","/imageGallery/SEAT_LEON_compressed.jpg","/imageGallery/SEAT_LEON_2.jpg","/imageGallery/SEAT_LEON_3.jpg","/imageGallery/SEAT_LEON_4.jpg","/imageGallery/Walter1.jpeg","/imageGallery/Walter2.jpeg"],"SEAT":["/imageGallery/SEAT_LEON_compressed.jpg","/imageGallery/SEAT_LEON_3.jpg"],"Walter":["/imageGallery/Walter2.jpeg","/imageGallery/Walter1.jpeg"]},"imageFilters":{"/imageGallery/SEAT_LEON_compressed.jpg":"Invert","/imageGallery/SEAT_LEON.jpg":"None","/imageGallery/SEAT_LEON_4.jpg":"Sepia","/imageGallery/SEAT_LEON_3.jpg":"Grayscale"}}
+{
+  "albumData": {
+    "default": [
+      "/imageGallery/SEAT_LEON.jpg",
+      "/imageGallery/Walter1.jpeg",
+      "/imageGallery/Walter1.jpeg",
+      "/imageGallery/Walter2.jpeg",
+      "/imageGallery/Walter2.jpeg"
+    ],
+    "SEAT": [
+      "/imageGallery/SEAT_LEON.jpg"
+    ],
+    "Walter": [
+      "/imageGallery/Walter1.jpeg",
+      "/imageGallery/Walter2.jpeg",
+      "/imageGallery/SEAT_LEON_7.jpg",
+      "/imageGallery/SEAT_LEON.jpg"
+    ]
+  },
+  "imageFilters": {
+    "/imageGallery/SEAT_LEON.jpg": "Grayscale",
+    "/imageGallery/Walter2.jpeg": "None"
+  }
+}
