@@ -13,12 +13,13 @@ Stéphanie Bertherat and Glene Ribeiro
 
 ### The project recreates a smartphone experience in Java, offering four practical applications that are ready to use.
 
-1. Picture Gallery – The Gallery application is an essential tool for managing and enhancing photos with ease.
+1. Address Book –
+
+2. Picture Gallery – The Gallery application is an essential tool for managing and enhancing photos with ease.
 It allows users to store, organize, and edit images effortlessly, providing features like resizing, filtering, and compression for optimal customization.
 Designed for seamless interaction, Gallery integrates directly with Address Book, enabling users to assign profile pictures to their contacts, 
 making personal connections more visual and engaging. Whether preserving memories, enhancing images, or linking photos to contacts, 
 Gallery delivers an intuitive and connected experience within the smartphone ecosystem.
-2. Address Book – 
 
 3. Finance Tracker – 
 
