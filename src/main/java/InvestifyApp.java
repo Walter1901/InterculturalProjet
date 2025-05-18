@@ -402,7 +402,7 @@ public class InvestifyApp {
         accountMain.add(currencyPanel, gbcAccount);
 
         // Add instructions about currency changes
-        JLabel currencyInfo = new JLabel("The currency change will be applied<br>when navigating between screens.", SwingConstants.CENTER);
+        JLabel currencyInfo = new JLabel("<html>The currency change will be applied<br>when navigating between screens.</html>", SwingConstants.CENTER);
         currencyInfo.setForeground(phoneUtils.textColor);
         currencyInfo.setFont(new Font("Inter", Font.ITALIC, 14));
         gbcAccount.gridy = 2;
