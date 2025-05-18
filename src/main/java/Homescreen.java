@@ -27,7 +27,8 @@ public class Homescreen extends phoneUtils{
         mainPanel.add(pictureGalleryScreen, "Picture Gallery");
 
         // Add Finance Tracker screen
-        JPanel financeTrackerScreen = FinanceTracker.createFinanceTracker();
+        FinanceTracker financeTracker = new FinanceTracker();
+        JPanel financeTrackerScreen = financeTracker.createFinanceTracker();
         mainPanel.add(financeTrackerScreen, "Finance Tracker");
 
 
