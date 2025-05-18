@@ -196,7 +196,8 @@ public class phoneUtils {
         mainPanel.add(homeScreen, "Home");
 
         // Add Investify screen
-        JPanel investifyScreen = InvestifyApp.createInvestify();
+        InvestifyApp investify = new InvestifyApp();
+        JPanel investifyScreen = investify.createInvestify();
         mainPanel.add(investifyScreen, "Investify");
 
         // Add Address Book screen
