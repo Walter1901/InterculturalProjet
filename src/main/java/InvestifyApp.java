@@ -493,19 +493,31 @@ public class InvestifyApp {
                 if (comp instanceof JPanel) {
                     JPanel panel = (JPanel) comp;
                     if (panel.getName() != null && panel.getName().equals("home")) {
-                        // Find and update the "Total value" label
+                        // Find and update the "Total value" label and pie chart
                         Component[] panelComponents = panel.getComponents();
-                        for (Component c : panelComponents) {
+                        for (int i = 0; i < panelComponents.length; i++) {
+                            Component c = panelComponents[i];
                             if (c instanceof JLabel) {
                                 JLabel label = (JLabel) c;
                                 if (label.getText().startsWith("Total value:")) {
                                     // Recalculate and update the total value
                                     createPieChartPanel(); // Updates portfolioValue with current currency
                                     label.setText("Total value: " + portfolioValue);
-                                    break;
                                 }
+                            } else if (i == 2) {
+                                // Replace the existing graph with a new one
+                                JPanel newChartPanel = createPieChartPanel();
+                                panel.remove(c);
+                                GridBagConstraints gbcChart = new GridBagConstraints();
+                                gbcChart.gridx = 0;
+                                gbcChart.gridy = 2;
+                                gbcChart.fill = GridBagConstraints.BOTH;
+                                gbcChart.weighty = 1;
+                                panel.add(newChartPanel, gbcChart, i);
                             }
                         }
+                        panel.revalidate();
+                        panel.repaint();
                         break;
                     }
                 }
