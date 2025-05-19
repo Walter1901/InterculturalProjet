@@ -9,8 +9,18 @@ import java.awt.*;
 import java.awt.event.*;
 
 /**
- * Gère l'interface utilisateur de la galerie photo.
- * Crée et manipule les composants visuels de l'application.
+ * Manages the user interface for the gallery application.
+ *
+ * This class is responsible for creating and managing all UI components,
+ * handling user interactions, and providing a consistent user experience.
+ * The UI is structured with a CardLayout that allows switching between
+ * different views:
+ * - Main Gallery View - Shows all images in the current album
+ * - Full Screen View - Shows a single image in detail with editing options
+ * - Album Views - One view per album, dynamically created
+ *
+ * The class delegates business logic to the appropriate manager classes
+ * and updates the UI based on the results.
  */
 public class GalleryUI {
     private PictureGalleryApp app;
@@ -27,9 +37,7 @@ public class GalleryUI {
     private JPanel fullControls;
     private JComboBox<String> filterComboBox;
 
-    /**
-     * Constructeur
-     */
+
     public GalleryUI(PictureGalleryApp app, AlbumManager albumManager, ImageManager imageManager) {
         this.app = app;
         this.albumManager = albumManager;
@@ -37,8 +45,12 @@ public class GalleryUI {
     }
 
     /**
-     * Crée l'interface utilisateur principale
-     * @return Le panel principal avec toutes les vues
+     * Creates the main interface of the gallery.
+     *
+     * Initializes all UI components and panels, sets up the card layout,
+     * and prepares the basic structure for the gallery application.
+     *
+     * @return A JPanel containing the complete gallery UI
      */
     public JPanel createMainInterface() {
         // Initialiser le layout et le panel principal
@@ -60,7 +72,14 @@ public class GalleryUI {
     }
 
     /**
-     * Crée la vue principale avec la grille d'images
+     * Creates the main gallery view.
+     *
+     * This view contains:
+     * - A top toolbar with Add and Albums buttons
+     * - A central scrollable panel showing images in a grid
+     * - A bottom scrollable bar showing album thumbnails
+     *
+     * @return The main gallery view panel
      */
     private JPanel createMainView() {
         JPanel mainView = new JPanel(new BorderLayout());
@@ -112,7 +131,14 @@ public class GalleryUI {
     }
 
     /**
-     * Crée la vue en plein écran pour afficher une image
+     * Creates the full screen view for displaying and editing images.
+     *
+     * This view contains:
+     * - A top bar with a Back button
+     * - A central area showing the selected image
+     * - A bottom control panel with editing options
+     *
+     * @return The full screen view panel
      */
     private JPanel createFullScreenView() {
         JPanel fullView = new JPanel(new BorderLayout());
@@ -158,7 +184,11 @@ public class GalleryUI {
     }
 
     /**
-     * Affiche la boîte de dialogue pour ajouter une image
+     * Shows a dialog for selecting and adding an image to the gallery.
+     *
+     * The dialog presents a list of available images from the resources folder.
+     * When an image is selected, it is compressed using TinyPNG and added to
+     * the current album.
      */
     private void showAddImageDialog() {
         String[] imagePaths = imageManager.getImageResourcePaths();
@@ -190,7 +220,10 @@ public class GalleryUI {
     }
 
     /**
-     * Affiche la boîte de dialogue pour choisir ou créer un album
+     * Shows a dialog for creating or selecting an album.
+     *
+     * If the album name entered doesn't exist, a new album is created.
+     * The gallery state is saved after creating a new album.
      */
     private void showAlbumChooser() {
         String name = JOptionPane.showInputDialog("Name of album to create/select:");
@@ -204,7 +237,10 @@ public class GalleryUI {
     }
 
     /**
-     * Supprime l'image actuellement affichée en plein écran
+     * Deletes the currently displayed image after confirmation.
+     *
+     * Shows a confirmation dialog, and if confirmed, removes the image from
+     * its album and updates the UI accordingly.
      */
     private void deleteCurrentImage() {
         JLabel origin = (JLabel) fullImageLabel.getClientProperty("originLabel");
@@ -231,7 +267,10 @@ public class GalleryUI {
     }
 
     /**
-     * Affiche la boîte de dialogue pour redimensionner une image
+     * Shows a dialog for resizing the currently displayed image.
+     *
+     * Accepts input in the format "widthxheight" (e.g., "150x150")
+     * and resizes the image accordingly.
      */
     private void showResizeDialog() {
         String input = JOptionPane.showInputDialog("New size (e.g. 150x150):");
@@ -253,7 +292,10 @@ public class GalleryUI {
     }
 
     /**
-     * Applique le filtre sélectionné à l'image actuelle
+     * Applies the currently selected filter to the displayed image.
+     *
+     * Gets the filter name from the filterComboBox and applies it to
+     * the image using the ImageManager.
      */
     private void applySelectedFilter() {
         JLabel origin = (JLabel) fullImageLabel.getClientProperty("originLabel");
@@ -265,15 +307,19 @@ public class GalleryUI {
     }
 
     /**
-     * Actualise l'interface utilisateur avec les données chargées
+     * Refreshes the gallery UI based on loaded data.
+     *
+     * Updates all albums, their contents, and thumbnails to reflect
+     * the current state of the data model.
      */
     public void refreshGalleryFromData() {
         albumManager.refreshAllAlbums();
     }
 
     /**
-     * Affiche une vue spécifique
-     * @param viewName Nom de la vue à afficher
+     * Switches to the specified view in the card layout.
+     *
+     * @param viewName The name of the view to display
      */
     public void showView(String viewName) {
         cardLayout.show(mainPanel, viewName);

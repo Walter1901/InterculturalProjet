@@ -11,8 +11,18 @@ import java.util.*;
 import java.util.List;
 
 /**
- * Gère les images de la galerie photo.
- * Responsable du chargement, de l'affichage et de la manipulation des images.
+ * Manages image processing and manipulation in the gallery.
+ *
+ * This class handles loading, displaying, filtering, and resizing images.
+ * It maintains the original versions of images to allow non-destructive
+ * editing and provides methods for various image transformations.
+ *
+ * Key responsibilities:
+ * - Loading images from resources
+ * - Creating image thumbnails
+ * - Applying image filters (grayscale, sepia, invert)
+ * - Resizing images
+ * - Maintaining original image data
  */
 public class ImageManager {
     // Stockage des images et filtres
@@ -24,7 +34,10 @@ public class ImageManager {
     private JComboBox<String> filterComboBox;
 
     /**
-     * Enregistre les composants d'affichage plein écran
+     * Registers UI components for full-screen image display.
+     *
+     * @param fullImageLabel The label that displays the full-screen image
+     * @param filterComboBox The combo box for selecting image filters
      */
     public void registerFullScreenComponents(JLabel fullImageLabel, JComboBox<String> filterComboBox) {
         this.fullImageLabel = fullImageLabel;
@@ -32,7 +45,15 @@ public class ImageManager {
     }
 
     /**
-     * Crée une étiquette contenant une image
+     * Creates a JLabel containing an image.
+     *
+     * Loads the image from the specified resource path, creates a thumbnail,
+     * and configures the label for interaction and drag-and-drop. The original
+     * image is stored for filter operations.
+     *
+     * @param resourcePath Path to the image resource
+     * @param albumPanel Panel that will contain the image
+     * @return A JLabel containing the image thumbnail
      */
     public JLabel createImageLabel(String resourcePath, JPanel albumPanel) {
         JLabel label = new JLabel();
@@ -88,7 +109,9 @@ public class ImageManager {
     }
 
     /**
-     * Affiche une image en plein écran
+     * Shows an image in full-screen view.
+     *
+     * @param label The label containing the image to display
      */
     private void showFullScreenImage(JLabel label) {
         if (fullImageLabel == null) return;
@@ -120,7 +143,14 @@ public class ImageManager {
     }
 
     /**
-     * Applique un filtre à une image
+     * Applies a filter to an image.
+     *
+     * Processes the image pixel by pixel to apply the selected filter effect.
+     * The original image is preserved to allow switching between different filters.
+     *
+     * @param originLabel The label containing the original image
+     * @param fullScreenLabel The label displaying the full-screen image
+     * @param filterName Name of the filter to apply ("None", "Grayscale", "Sepia", "Invert")
      */
     public void applyFilter(JLabel originLabel, JLabel fullScreenLabel, String filterName) {
         if (originLabel == null || !(originLabel.getIcon() instanceof ImageIcon)) return;
@@ -178,7 +208,11 @@ public class ImageManager {
     }
 
     /**
-     * Applique un filtre niveaux de gris
+     * Applies a grayscale filter to an image.
+     *
+     * Converts each pixel to grayscale by averaging the RGB components.
+     *
+     * @param img The BufferedImage to transform
      */
     private void applyGrayscaleFilter(BufferedImage img) {
         int width = img.getWidth();
@@ -198,7 +232,11 @@ public class ImageManager {
     }
 
     /**
-     * Applique un filtre sépia
+     * Applies a sepia filter to an image.
+     *
+     * Transforms each pixel using a sepia tone formula for a vintage effect.
+     *
+     * @param img The BufferedImage to transform
      */
     private void applySepiaFilter(BufferedImage img) {
         int width = img.getWidth();
@@ -220,7 +258,11 @@ public class ImageManager {
     }
 
     /**
-     * Applique un filtre d'inversion
+     * Applies an invert filter to an image.
+     *
+     * Inverts the color values of each pixel (255 - value).
+     *
+     * @param img The BufferedImage to transform
      */
     private void applyInvertFilter(BufferedImage img) {
         int width = img.getWidth();
@@ -239,7 +281,12 @@ public class ImageManager {
     }
 
     /**
-     * Redimensionne une image
+     * Resizes an image to the specified dimensions.
+     *
+     * @param originLabel The label containing the original image
+     * @param fullScreenLabel The label displaying the full-screen image
+     * @param width The new width for the image
+     * @param height The new height for the image
      */
     public void resizeImage(JLabel originLabel, JLabel fullScreenLabel, int width, int height) {
         if (originLabel != null && originLabel.getIcon() instanceof ImageIcon) {
@@ -263,7 +310,9 @@ public class ImageManager {
     }
 
     /**
-     * Récupère les chemins des images disponibles dans les ressources
+     * Gets a list of available image paths from the resources.
+     *
+     * @return An array of image resource paths
      */
     public String[] getImageResourcePaths() {
         String folder = "/imageGallery";
@@ -295,7 +344,9 @@ public class ImageManager {
     }
 
     /**
-     * Obtient les données de filtre pour la persistance
+     * Gets the filter data for persistence.
+     *
+     * @return A map of image paths to their applied filters
      */
     public Map<String, String> getFilterData() {
         Map<String, String> filterData = new HashMap<>();
@@ -313,7 +364,9 @@ public class ImageManager {
     }
 
     /**
-     * Définit les données de filtre depuis la persistance
+     * Sets the filter data from persistent storage.
+     *
+     * @param filterData A map of image paths to their applied filters
      */
     public void setFilterData(Map<String, String> filterData) {
         this.appliedFilters.clear();

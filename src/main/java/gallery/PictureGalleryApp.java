@@ -8,11 +8,22 @@ import gallery.service.StorageManager;
 import gallery.ui.GalleryUI;
 
 import javax.swing.*;
-import java.awt.*;
 
 /**
- * Application principale de la galerie photo.
- * Coordonne les différents composants et gère le cycle de vie de l'application.
+ * Main application class for the photo gallery.
+ *
+ * This class acts as the central coordinator for the gallery application,
+ * initializing and connecting all the different components. It manages the
+ * application lifecycle, handles data loading and saving, and maintains
+ * the current application state.
+ *
+ * The application follows a component-based architecture where each component
+ * has a specific responsibility:
+ * - StorageManager - Handles data persistence
+ * - ImageManager - Manages image processing
+ * - AlbumManager - Organizes images into albums
+ * - ContactLinkManager - Links images to contacts
+ * - GalleryUI - Provides the user interface
  */
 public class PictureGalleryApp {
     // Gestionnaires
@@ -26,7 +37,16 @@ public class PictureGalleryApp {
     private String currentAlbum = "default";
 
     /**
-     * Constructeur - initialise tous les composants de l'application
+     * Constructs a new PictureGalleryApp.
+     *
+     * Initializes all components of the application in the correct order,
+     * ensuring dependencies are properly set up. Components are initialized
+     * in the following order:
+     * 1. StorageManager - No dependencies
+     * 2. ImageManager - No dependencies
+     * 3. AlbumManager - Depends on ImageManager and StorageManager
+     * 4. ContactLinkManager - No dependencies
+     * 5. GalleryUI - Depends on all other components
      */
     public PictureGalleryApp() {
         // Initialiser les différents gestionnaires dans l'ordre des dépendances
@@ -38,8 +58,14 @@ public class PictureGalleryApp {
     }
 
     /**
-     * Crée et initialise l'interface utilisateur de la galerie
-     * @return Le panel principal de l'application
+     * Creates and initializes the gallery user interface.
+     *
+     * This method:
+     * 1. Creates the main user interface
+     * 2. Initializes the default album
+     * 3. Loads any existing gallery data from storage
+     *
+     * @return A JPanel containing the complete gallery interface
      */
     public JPanel createPictureGallery() {
         // Créer l'interface
@@ -55,7 +81,11 @@ public class PictureGalleryApp {
     }
 
     /**
-     * Charge les données de la galerie depuis le stockage
+     * Loads gallery data from persistent storage.
+     *
+     * Retrieves saved album structure and image filter information,
+     * then updates the UI to reflect the loaded data. If no data
+     * is found, the application starts with an empty gallery.
      */
     private void loadGallery() {
         GalleryData data = storageManager.loadGalleryData();
@@ -69,7 +99,10 @@ public class PictureGalleryApp {
     }
 
     /**
-     * Sauvegarde l'état actuel de la galerie
+     * Saves the current state of the gallery to persistent storage.
+     *
+     * Collects current album data and image filter information and
+     * persists it to storage for future retrieval.
      */
     public void saveGallery() {
         GalleryData data = new GalleryData();
@@ -78,12 +111,20 @@ public class PictureGalleryApp {
         storageManager.saveGalleryData(data);
     }
 
-    // Getters et setters pour l'état de l'application
-
+    /**
+     * Gets the name of the currently selected album.
+     *
+     * @return The name of the current album
+     */
     public String getCurrentAlbum() {
         return currentAlbum;
     }
 
+    /**
+     * Sets the current album.
+     *
+     * @param albumName The name of the album to set as current
+     */
     public void setCurrentAlbum(String albumName) {
         this.currentAlbum = albumName;
     }

@@ -5,8 +5,12 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Structure de données pour stocker et sérialiser les données de la galerie.
- * Utilisée pour sauvegarder et charger l'état de l'application.
+ * Data structure for serialization of gallery state.
+ *
+ * This class serves as a container for all persistent gallery data,
+ * including the structure of albums and their contents, as well as
+ * the filters applied to individual images. It is designed to be
+ * easily serialized to and deserialized from JSON format.
  */
 public class GalleryData {
     // Stocke les chemins d'images par album
@@ -16,34 +20,54 @@ public class GalleryData {
     private Map<String, String> imageFilters = new HashMap<>();
 
     /**
-     * Constructeur par défaut
+     * Creates a new empty GalleryData instance.
      */
     public GalleryData() {
     }
 
     /**
-     * Récupère les données d'album
+     * Gets the album data for all albums.
+     *
+     * Returns a map where each key is an album name and the corresponding
+     * value is a list of image paths contained in that album.
+     *
+     * @return Map of album names to lists of image paths
      */
     public Map<String, List<String>> getAlbumData() {
         return albumData;
     }
 
     /**
-     * Définit les données d'album
+     * Sets the album data for all albums.
+     *
+     * Updates the album structure with the provided mapping of album names
+     * to lists of image paths.
+     *
+     * @param albumData Map of album names to lists of image paths
      */
     public void setAlbumData(Map<String, List<String>> albumData) {
         this.albumData = albumData;
     }
 
     /**
-     * Récupère les filtres appliqués aux images
+     * Gets the image filter data.
+     *
+     * Returns a map where each key is an image path and the corresponding
+     * value is the name of the filter applied to that image.
+     *
+     * @return Map of image paths to filter names
      */
     public Map<String, String> getImageFilters() {
         return imageFilters;
     }
 
     /**
-     * Définit les filtres appliqués aux images
+     * Sets the image filter data.
+     *
+     * Updates the filter information with the provided mapping of image paths
+     * to filter names.
+     *
+     * @param imageFilters Map of image paths to filter names
      */
     public void setImageFilters(Map<String, String> imageFilters) {
         this.imageFilters = imageFilters;

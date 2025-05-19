@@ -6,17 +6,31 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Gère les liens entre les images et les contacts.
- * Permet d'associer des images à des contacts de l'application AddressBook.
+ * Manages associations between images and contacts.
+ *
+ * This class provides functionality to link images in the gallery with
+ * contacts from the address book. It maintains a mapping of contact IDs
+ * to the images associated with them, supporting bidirectional lookup.
+ *
+ * Key features:
+ * - Linking images to contacts
+ * - Finding all images for a specific contact
+ * - Finding all contacts associated with an image
+ * - Removing links between images and contacts
  */
 public class ContactLinkManager {
     // Structure de données pour stocker les liens
     private Map<String, List<String>> contactImageLinks = new HashMap<>();
 
     /**
-     * Associe une image à un contact
-     * @param contactId Identifiant du contact
-     * @param imagePath Chemin de l'image
+     * Links an image to a contact.
+     *
+     * Creates an association between the specified contact and image.
+     * If the contact already has links to other images, the new image
+     * is added to that collection.
+     *
+     * @param contactId Identifier of the contact
+     * @param imagePath Path to the image resource
      */
     public void linkImageToContact(String contactId, String imagePath) {
         if (!contactImageLinks.containsKey(contactId)) {
@@ -29,18 +43,23 @@ public class ContactLinkManager {
     }
 
     /**
-     * Récupère les images associées à un contact
-     * @param contactId Identifiant du contact
-     * @return Liste des chemins d'images associées
+     * Retrieves all images linked to a specific contact.
+     *
+     * Returns a list of image paths associated with the given contact ID.
+     * If no images are linked to the contact, returns an empty list.
+     *
+     * @param contactId Identifier of the contact
+     * @return List of image paths linked to the contact
      */
     public List<String> getImagesForContact(String contactId) {
         return contactImageLinks.getOrDefault(contactId, new ArrayList<>());
     }
 
     /**
-     * Supprime l'association entre une image et un contact
-     * @param contactId Identifiant du contact
-     * @param imagePath Chemin de l'image
+     * Removes the association between an image and a contact.
+     *
+     * @param contactId Identifier of the contact
+     * @param imagePath Path to the image resource
      */
     public void unlinkImageFromContact(String contactId, String imagePath) {
         if (contactImageLinks.containsKey(contactId)) {
@@ -49,9 +68,10 @@ public class ContactLinkManager {
     }
 
     /**
-     * Récupère tous les contacts associés à une image
-     * @param imagePath Chemin de l'image
-     * @return Liste des identifiants de contacts associés
+     * Retrieves all contacts associated with a specific image.
+     *
+     * @param imagePath Path to the image resource
+     * @return List of contact IDs linked to the image
      */
     public List<String> getContactsForImage(String imagePath) {
         List<String> contacts = new ArrayList<>();

@@ -9,12 +9,8 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
 import java.util.List;
-import gallery.service.TinyPNGService;
 
-/**
- * Gère les albums de la galerie photo.
- * Responsable de la création, suppression et modification des albums.
- */
+
 public class AlbumManager {
     private ImageManager imageManager;
     private StorageManager storageManager;
@@ -27,7 +23,17 @@ public class AlbumManager {
     private JPanel albumBar;
 
     /**
-     * Constructeur
+     * Manages the albums in the gallery application.
+     *
+     * This class is responsible for creating, updating, and deleting albums,
+     * as well as managing the images within each album. It handles the organization
+     * of images into logical collections and provides methods for album manipulation.
+     *
+     * Key responsibilities:
+     * - Creating and managing album data structures
+     * - Adding and removing images from albums
+     * - Creating visual representations of albums
+     * - Handling drag-and-drop functionality between albums
      */
     public AlbumManager(ImageManager imageManager, StorageManager storageManager) {
         this.imageManager = imageManager;
@@ -35,7 +41,10 @@ public class AlbumManager {
     }
 
     /**
-     * Enregistre les panneaux d'interface utilisés par le gestionnaire
+     * Registers the UI panels used by the album manager.
+     *
+     * @param galleryPanel The main panel that displays images
+     * @param albumBar The panel that displays album thumbnails
      */
     public void registerPanels(JPanel galleryPanel, JPanel albumBar) {
         this.galleryPanel = galleryPanel;
@@ -43,7 +52,8 @@ public class AlbumManager {
     }
 
     /**
-     * Initialise l'album par défaut
+     * Initializes the default album if it doesn't exist yet.
+     * The default album is used when no specific album is selected.
      */
     public void initializeDefaultAlbum() {
         if (!albums.containsKey("default")) {
@@ -53,9 +63,10 @@ public class AlbumManager {
     }
 
     /**
-     * Crée un album s'il n'existe pas déjà
-     * @param name Nom du nouvel album
-     * @return true si l'album a été créé, false s'il existait déjà
+     * Creates a new album if it doesn't already exist.
+     *
+     * @param name The name for the new album
+     * @return true if the album was created, false if it already existed
      */
     public boolean createAlbumIfNotExists(String name) {
         if (!albums.containsKey(name)) {
@@ -87,7 +98,15 @@ public class AlbumManager {
     }
 
     /**
-     * Crée une vignette pour un album
+     * Creates a thumbnail label for an album.
+     *
+     * The thumbnail includes the album name and is configured to support
+     * drag-and-drop operations. Click events on the thumbnail will open
+     * the corresponding album view.
+     *
+     * @param albumName Name of the album
+     * @param albumPanel The panel containing the album's images
+     * @return A JLabel serving as the album thumbnail
      */
     private JLabel createAlbumThumbnail(String albumName, JPanel albumPanel) {
         // Créer la vignette avec le nom de l'album
@@ -116,8 +135,15 @@ public class AlbumManager {
     }
 
     /**
-     * Crée un TransferHandler pour la vignette d'album
-     * Permet de déposer des images dans l'album
+     * Creates a TransferHandler for album thumbnails to support drag-and-drop.
+     *
+     * This handler allows images to be dragged from other parts of the application
+     * and dropped onto an album thumbnail, adding them to that album.
+     *
+     * @param albumName Name of the target album
+     * @param albumPanel Panel containing the album's images
+     * @param thumbnail The album's thumbnail label
+     * @return A TransferHandler configured for the album
      */
     private TransferHandler createAlbumTransferHandler(String albumName, JPanel albumPanel, JLabel thumbnail) {
         return new TransferHandler("text") {
@@ -169,8 +195,16 @@ public class AlbumManager {
     }
 
     /**
-     * Crée un MouseListener pour la vignette d'album
-     * Ouvre l'album lorsqu'on clique dessus
+     * Creates a MouseListener for album thumbnails.
+     *
+     * When an album thumbnail is clicked, this listener either shows an existing
+     * album view or creates a new one if it doesn't exist yet. The album view
+     * includes navigation controls and displays all images in the album.
+     *
+     * @param albumName Name of the album
+     * @param albumPanel Panel containing the album's images
+     * @param thumbnail The album's thumbnail label
+     * @return A MouseAdapter for handling click events
      */
     private MouseAdapter createAlbumMouseListener(String albumName, JPanel albumPanel, JLabel thumbnail) {
         return new MouseAdapter() {
@@ -257,7 +291,13 @@ public class AlbumManager {
     }
 
     /**
-     * Ajoute une image à un album
+     * Adds an image to the specified album.
+     *
+     * The image is first compressed using TinyPNG, then added to the specified
+     * album. If the album doesn't exist, the default album is used.
+     *
+     * @param albumName Name of the album to add the image to
+     * @param imagePath Path to the image resource
      */
     public void addImageToAlbum(String albumName, String imagePath) {
         // Compresser l'image avant de l'ajouter
@@ -305,7 +345,11 @@ public class AlbumManager {
     }
 
     /**
-     * Supprime une image
+     * Deletes an image from its album.
+     *
+     * Removes the image from the UI and from the album's data structure.
+     *
+     * @param imageLabel The JLabel containing the image to delete
      */
     public void deleteImage(JLabel imageLabel) {
         JPanel albumPanel = (JPanel) imageLabel.getClientProperty("albumPanel");
@@ -340,7 +384,10 @@ public class AlbumManager {
     }
 
     /**
-     * Supprime un album
+     * Deletes an album and all its images.
+     *
+     * @param albumName The name of the album to delete
+     * @param thumbnail The thumbnail label for the album
      */
     public void deleteAlbum(String albumName, JLabel thumbnail) {
         // Empêcher la suppression de l'album par défaut
@@ -399,7 +446,11 @@ public class AlbumManager {
     }
 
     /**
-     * Rafraîchit tous les albums avec les données actuelles
+     * Refreshes all albums with current data.
+     *
+     * Clears and rebuilds all album panels and thumbnails based on the
+     * current album data. This ensures the UI reflects the current state
+     * of the data model.
      */
     public void refreshAllAlbums() {
         // Nettoyer les panels existants
@@ -445,7 +496,9 @@ public class AlbumManager {
     }
 
     /**
-     * Récupère les données d'album pour la persistance
+     * Gets the album data for persistence.
+     *
+     * @return A map of album names to lists of image paths
      */
     public Map<String, List<String>> getAlbumData() {
         Map<String, List<String>> result = new HashMap<>();
@@ -458,7 +511,9 @@ public class AlbumManager {
     }
 
     /**
-     * Définit les données d'album depuis la persistance
+     * Sets the album data from persistent storage.
+     *
+     * @param albumData A map of album names to lists of image paths
      */
     public void setAlbumData(Map<String, List<String>> albumData) {
         // Créer ou mettre à jour les albums
