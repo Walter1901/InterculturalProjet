@@ -8,45 +8,46 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
+import java.net.URL;
+import java.io.FileNotFoundException;
 
 public class FinanceTracker {
 
-    private static CardLayout cardLayout = new CardLayout();
-    private static JPanel cardPanel = new JPanel(cardLayout);
-    private static Map<String, List<String>> monthlyExpenses = new HashMap<>();
-    private static final Map<String, Double> monthlyBalances = new HashMap<>();
-    private static JLabel viewAllLabel;
-    private static JComboBox<String> monthCombo;
-    private static JComboBox<String> yearCombo;
-    private static JTextArea expensesArea;
-    private static JTextArea balanceArea;
-    private static JComboBox<String> balanceMonthCombo;
-    private static JComboBox<String> balanceYearCombo;
+    private final CardLayout cardLayout = new CardLayout();
+    private final JPanel cardPanel = new JPanel(cardLayout);
+    private final Map<String, List<String>> monthlyExpenses = new HashMap<>();
+    private final Map<String, Double> monthlyBalances = new HashMap<>();
+    private final Map<String, Map<String, String>> monthlyNetSavings = new HashMap<>();
+    private final Map<String, Map<String, String>> monthlyDebts = new HashMap<>();
 
+    private JLabel viewAllLabel;
+    private JComboBox<String> monthCombo;
+    private JComboBox<String> yearCombo;
+    private JTextArea expensesArea;
+    private JPanel balanceArea;
+    private JComboBox<String> balanceMonthCombo;
+    private JComboBox<String> balanceYearCombo;
 
-    public static JPanel createFinanceTracker() {
-
+    public JPanel createFinanceTracker() {
         JPanel financeApp = new JPanel(new BorderLayout());
         financeApp.setBackground(new Color(245, 245, 250));
 
         JPanel mainPanel = createMainPanel();
         JPanel expensesPanel = createExpensesPanel();
+        JPanel balancePanel = createBalancePanel();
 
         cardPanel.add(mainPanel, "main");
         cardPanel.add(expensesPanel, "expenses");
+        cardPanel.add(balancePanel, "balance");
 
         JPanel bottomNav = createBottomNavigation();
         financeApp.add(cardPanel, BorderLayout.CENTER);
         financeApp.add(bottomNav, BorderLayout.SOUTH);
 
-        JPanel balancePanel = createBalancePanel();
-        cardPanel.add(balancePanel, "balance");
-
-
         return financeApp;
     }
 
-    private static JPanel createExpensesPanel() {
+    private JPanel createExpensesPanel() {
         JPanel expensesPanel = new JPanel(new BorderLayout());
         expensesPanel.setBackground(new Color(245, 245, 250));
         expensesPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
@@ -68,13 +69,12 @@ public class FinanceTracker {
         headerPanel.add(addButton, BorderLayout.SOUTH);
         expensesPanel.add(headerPanel, BorderLayout.NORTH);
 
-        // JTextArea mit Zeilenumbruch aktivieren
         expensesArea = new JTextArea();
         expensesArea.setFont(new Font("Inter", Font.PLAIN, 14));
         expensesArea.setEditable(false);
         expensesArea.setBackground(Color.WHITE);
-        expensesArea.setLineWrap(true);  // Zeilenumbruch aktivieren
-        expensesArea.setWrapStyleWord(true);  // Wortweise umbrechen
+        expensesArea.setLineWrap(true);
+        expensesArea.setWrapStyleWord(true);
 
         JScrollPane scrollPane = new JScrollPane(expensesArea);
         expensesPanel.add(scrollPane, BorderLayout.CENTER);
@@ -87,8 +87,7 @@ public class FinanceTracker {
         return expensesPanel;
     }
 
-
-    private static JPanel createDateSelectionPanel() {
+    private JPanel createDateSelectionPanel() {
         JPanel datePanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
         datePanel.setBackground(new Color(245, 245, 250));
 
@@ -116,16 +115,14 @@ public class FinanceTracker {
         return datePanel;
     }
 
-    private static JButton createAddExpenseButton() {
+    private JButton createAddExpenseButton() {
         JButton addButton = new JButton("Add new Expense");
         addButton.setBackground(new Color(0, 122, 255));
         addButton.setForeground(Color.WHITE);
         addButton.setBorder(new EmptyBorder(5, 10, 5, 10));
         addButton.addActionListener(e -> {
-            // Dialog für neue Ausgabe erstellen
             JPanel panel = new JPanel(new GridLayout(3, 2));
 
-            // Aktuelles Datum im Format dd.MM.yyyy
             String currentDate = LocalDate.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy"));
 
             JLabel dateLabel = new JLabel("Date:");
@@ -149,17 +146,14 @@ public class FinanceTracker {
 
             if (result == JOptionPane.OK_OPTION) {
                 try {
-                    // Datum parsen
                     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
                     LocalDate expenseDate = LocalDate.parse(dateField.getText(), formatter);
 
-                    // Monat und Jahr aus dem Datum extrahieren
                     String month = expenseDate.getMonth().toString();
-                    month = month.charAt(0) + month.substring(1).toLowerCase(); // "MARCH" -> "March"
+                    month = month.charAt(0) + month.substring(1).toLowerCase();
                     String year = String.valueOf(expenseDate.getYear());
                     String key = month + " " + year;
 
-                    // Formatierter Eintrag mit fester Breite
                     String newEntry = String.format("%-12s  %-25s CHF%10.2f",
                             dateField.getText(),
                             descField.getText(),
@@ -170,7 +164,6 @@ public class FinanceTracker {
                     }
                     monthlyExpenses.get(key).add(newEntry);
 
-                    // Dropdowns auf das Datum der neuen Ausgabe setzen
                     monthCombo.setSelectedItem(month);
                     yearCombo.setSelectedItem(year);
 
@@ -185,7 +178,7 @@ public class FinanceTracker {
         return addButton;
     }
 
-    private static JLabel createViewAllLabel() {
+    private JLabel createViewAllLabel() {
         JLabel label = new JLabel("", SwingConstants.CENTER);
         label.setForeground(new Color(0, 122, 255));
         label.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -212,7 +205,7 @@ public class FinanceTracker {
         return label;
     }
 
-    private static JPanel createBalancePanel() {
+    private JPanel createBalancePanel() {
         JPanel balancePanel = new JPanel(new BorderLayout());
         balancePanel.setBackground(new Color(245, 245, 250));
         balancePanel.setBorder(new EmptyBorder(15, 15, 15, 15));
@@ -220,11 +213,6 @@ public class FinanceTracker {
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setBackground(new Color(245, 245, 250));
 
-        JLabel title = new JLabel("Balance overview");
-        title.setFont(new Font("Inter", Font.BOLD, 15));
-        title.setBorder(new EmptyBorder(0, 0, 10, 0));
-
-        // Datumsauswahl
         JPanel datePanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
         datePanel.setBackground(new Color(245, 245, 250));
 
@@ -232,165 +220,343 @@ public class FinanceTracker {
                 "July", "August", "September", "October", "November", "December"};
         String[] years = {"2024", "2025"};
 
-        JComboBox<String> balanceMonthCombo = new JComboBox<>(months);
-        JComboBox<String> balanceYearCombo = new JComboBox<>(years);
+        balanceMonthCombo = new JComboBox<>(months);
+        balanceYearCombo = new JComboBox<>(years);
         balanceMonthCombo.setFont(new Font("Inter", Font.PLAIN, 14));
         balanceYearCombo.setFont(new Font("Inter", Font.PLAIN, 14));
 
+        LocalDate now = LocalDate.now();
+        balanceMonthCombo.setSelectedIndex(now.getMonthValue() - 1);
+        balanceYearCombo.setSelectedItem(String.valueOf(now.getYear()));
+
+        JLabel title = new JLabel("Balance overview");
+
         datePanel.add(balanceMonthCombo);
         datePanel.add(balanceYearCombo);
-
-        // Setze aktuellen Monat und Jahr als Standardauswahl
-        LocalDate now = LocalDate.now();
-        balanceMonthCombo.setSelectedIndex(now.getMonthValue() - 1); // 0-basiert
-        balanceYearCombo.setSelectedItem(String.valueOf(now.getYear()));
 
         headerPanel.add(title, BorderLayout.WEST);
         headerPanel.add(datePanel, BorderLayout.EAST);
 
         balancePanel.add(headerPanel, BorderLayout.NORTH);
 
-        balanceArea = new JTextArea();
-        balanceArea.setFont(new Font("Inter", Font.PLAIN, 14));
-        balanceArea.setEditable(false);
-        balanceArea.setBackground(Color.WHITE);
+        balanceArea = new JPanel(new BorderLayout());
+        balanceArea.setBackground(new Color(245, 245, 250));
+
         JScrollPane scrollPane = new JScrollPane(balanceArea);
+        scrollPane.setBorder(null);
         balancePanel.add(scrollPane, BorderLayout.CENTER);
 
-        // Listener für Änderungen am Monat
-        balanceMonthCombo.addItemListener(e -> updateBalanceArea(balanceArea, balanceMonthCombo, balanceYearCombo));
+        ItemListener dateChangeListener = e -> {
+            title.setText("Balance overview");
+            updateBalanceArea();
+        };
+        balanceMonthCombo.addItemListener(dateChangeListener);
+        balanceYearCombo.addItemListener(dateChangeListener);
 
-        // Listener für Änderungen am Jahr
-        balanceYearCombo.addItemListener(e -> updateBalanceArea(balanceArea, balanceMonthCombo, balanceYearCombo));
-
-        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JPanel bottomPanel = new JPanel(new BorderLayout());
         bottomPanel.setBackground(new Color(245, 245, 250));
 
-        // Button für Ausgaben
-        JButton addExpenseButton = new JButton("Add expense");
-        addExpenseButton.setBackground(new Color(0, 122, 255));
-        addExpenseButton.setForeground(Color.WHITE);
-        addExpenseButton.addActionListener(e -> {
-            JPanel inputPanel = new JPanel(new GridLayout(2, 2));
-            inputPanel.add(new JLabel("Description:"));
-            JTextField descField = new JTextField();
-            inputPanel.add(descField);
-            inputPanel.add(new JLabel("Amount (CHF):"));
-            JTextField amountField = new JTextField();
-            inputPanel.add(amountField);
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        buttonPanel.setBackground(new Color(245, 245, 250));
 
-            int result = JOptionPane.showConfirmDialog(null, inputPanel,
-                    "Add Expense Entry", JOptionPane.OK_CANCEL_OPTION);
+        JButton netSavingsButton = new JButton("Enter Net Savings");
+        netSavingsButton.setBackground(new Color(0, 122, 255));
+        netSavingsButton.setForeground(Color.WHITE);
+        netSavingsButton.addActionListener(e -> enterFinancialData("Net Savings"));
+
+        JButton debtsButton = new JButton("Enter Debts");
+        debtsButton.setBackground(new Color(0, 122, 255));
+        debtsButton.setForeground(Color.WHITE);
+        debtsButton.addActionListener(e -> enterFinancialData("Debts"));
+
+        buttonPanel.add(netSavingsButton);
+        buttonPanel.add(debtsButton);
+        bottomPanel.add(buttonPanel, BorderLayout.NORTH);
+
+        balancePanel.add(bottomPanel, BorderLayout.SOUTH);
+
+        updateBalanceArea();
+        return balancePanel;
+    }
+
+    private void enterFinancialData(String type) {
+        String month = (String) balanceMonthCombo.getSelectedItem();
+        String year = (String) balanceYearCombo.getSelectedItem();
+        String key = month + " " + year;
+
+        JPanel panel = new JPanel(new GridLayout(0, 1));
+
+        if (type.equals("Net Savings")) {
+            JLabel currentLabel = new JLabel("Current month (CHF):");
+            JTextField currentField = new JTextField();
+
+            JLabel yearLabel = new JLabel("Full year (CHF):");
+            JTextField yearField = new JTextField();
+
+            JLabel janLabel = new JLabel("January (CHF):");
+            JTextField janField = new JTextField();
+
+            JLabel febLabel = new JLabel("February (CHF):");
+            JTextField febField = new JTextField();
+
+            JLabel marLabel = new JLabel("March (CHF):");
+            JTextField marField = new JTextField();
+
+            panel.add(currentLabel);
+            panel.add(currentField);
+            panel.add(yearLabel);
+            panel.add(yearField);
+            panel.add(janLabel);
+            panel.add(janField);
+            panel.add(febLabel);
+            panel.add(febField);
+            panel.add(marLabel);
+            panel.add(marField);
+
+            int result = JOptionPane.showConfirmDialog(null, panel,
+                    "Enter Net Savings Data", JOptionPane.OK_CANCEL_OPTION);
 
             if (result == JOptionPane.OK_OPTION) {
                 try {
-                    String month = (String) balanceMonthCombo.getSelectedItem();
-                    String year = (String) balanceYearCombo.getSelectedItem();
-                    String key = month + " " + year;
+                    Map<String, String> netSavingsData = new HashMap<>();
+                    netSavingsData.put("current", currentField.getText());
+                    netSavingsData.put("year", yearField.getText());
+                    netSavingsData.put("jan", janField.getText());
+                    netSavingsData.put("feb", febField.getText());
+                    netSavingsData.put("mar", marField.getText());
 
-                    String entry = String.format("%-25s %10s", descField.getText(), "CHF" + amountField.getText());
-
-                    if (!monthlyExpenses.containsKey(key)) {
-                        monthlyExpenses.put(key, new ArrayList<>());
-                    }
-                    monthlyExpenses.get(key).add(entry);
-
-                    updateBalanceArea(balanceArea, balanceMonthCombo, balanceYearCombo);
+                    monthlyNetSavings.put(key, netSavingsData);
+                    updateBalanceArea();
                 } catch (Exception ex) {
                     JOptionPane.showMessageDialog(null, "Invalid input", "Error", JOptionPane.ERROR_MESSAGE);
                 }
             }
-        });
+        } else if (type.equals("Debts")) {
+            JLabel creditLabel = new JLabel("Credit Card (CHF):");
+            JTextField creditField = new JTextField();
 
-        // Button für Kontostand
-        JButton enterBalanceButton = new JButton("Enter account balance");
-        enterBalanceButton.setBackground(new Color(0, 122, 255));
-        enterBalanceButton.setForeground(Color.WHITE);
-        enterBalanceButton.addActionListener(e -> {
-            String month = (String) balanceMonthCombo.getSelectedItem();
-            String year = (String) balanceYearCombo.getSelectedItem();
-            String key = month + " " + year;
+            JLabel loanLabel = new JLabel("Student Loan (CHF):");
+            JTextField loanField = new JTextField();
 
-            String input = JOptionPane.showInputDialog(null,
-                    "Enter your account balance for " + key + ":", "Account Balance",
-                    JOptionPane.PLAIN_MESSAGE);
+            panel.add(creditLabel);
+            panel.add(creditField);
+            panel.add(loanLabel);
+            panel.add(loanField);
 
-            if (input != null && !input.trim().isEmpty()) {
+            int result = JOptionPane.showConfirmDialog(null, panel,
+                    "Enter Debts Data", JOptionPane.OK_CANCEL_OPTION);
+
+            if (result == JOptionPane.OK_OPTION) {
                 try {
-                    double balance = Double.parseDouble(input.trim());
-                    monthlyBalances.put(key, balance);
-                    updateBalanceArea(balanceArea, balanceMonthCombo, balanceYearCombo);
-                } catch (NumberFormatException ex) {
-                    JOptionPane.showMessageDialog(null, "Invalid number format", "Error", JOptionPane.ERROR_MESSAGE);
+                    Map<String, String> debtsData = new HashMap<>();
+                    debtsData.put("credit", creditField.getText());
+                    debtsData.put("loan", loanField.getText());
+
+                    monthlyDebts.put(key, debtsData);
+                    updateBalanceArea();
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(null, "Invalid input", "Error", JOptionPane.ERROR_MESSAGE);
                 }
-            }
-        });
-
-        // Button zum Aktualisieren
-        JButton refreshButton = new JButton("Refresh overview");
-        refreshButton.setBackground(new Color(0, 122, 255));
-        refreshButton.setForeground(Color.WHITE);
-        refreshButton.addActionListener(e -> updateBalanceArea(balanceArea, balanceMonthCombo, balanceYearCombo));
-
-        bottomPanel.add(addExpenseButton);
-        bottomPanel.add(enterBalanceButton);
-        bottomPanel.add(refreshButton);
-        balancePanel.add(bottomPanel, BorderLayout.SOUTH);
-
-        updateBalanceArea(balanceArea, balanceMonthCombo, balanceYearCombo);
-        return balancePanel;
-    }
-
-    private static void updateBalanceArea(JTextArea balanceArea, JComboBox<String> monthCombo, JComboBox<String> yearCombo) {
-        String month = (String) monthCombo.getSelectedItem();
-        String year = (String) yearCombo.getSelectedItem();
-        String key = month + " " + year;
-
-        // Monospaced Font für exakte Ausrichtung
-        balanceArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 14));
-
-        StringBuilder sb = new StringBuilder();
-        sb.append(String.format("Balance Overview for %s%n%n", key));
-
-        // Kontostand
-        double balance = monthlyBalances.getOrDefault(key, 0.0);
-        sb.append(String.format("%-20s CHF%10.2f%n", "Account Balance:", balance));
-        sb.append("\n");
-
-        // Berechne Gesamtausgaben
-        List<String> expenses = monthlyExpenses.getOrDefault(key, new ArrayList<>());
-        double totalExpenses = 0.0;
-        for (String entry : expenses) {
-            try {
-                // Extrahiere den Betrag aus dem Eintrag
-                int chfIndex = entry.indexOf("CHF");
-                if (chfIndex >= 0) {
-                    String amountStr = entry.substring(chfIndex + 3).trim();
-                    amountStr = amountStr.replace(".", "").replace(",", ".");  // Entfernt Tausenderpunkt, ersetzt Komma durch Punkt
-                    totalExpenses += Double.parseDouble(amountStr);
-
-                }
-            } catch (Exception ex) {
-                System.err.println("Error parsing amount from entry: " + entry);
-                ex.printStackTrace();
             }
         }
-
-        // Nur das Total anzeigen
-        sb.append(String.format("%-20s CHF%10.2f%n", "Total Expenses:", totalExpenses));
-
-        double remaining = balance - totalExpenses;
-        sb.append(String.format("%-20s CHF%10.2f%n", "Remaining Balance:", remaining));
-
-        balanceArea.setText(sb.toString());
     }
 
-    private static void updateExpensesDisplay() {
+    private void updateBalanceArea() {
+        String month = (String) balanceMonthCombo.getSelectedItem();
+        String year = (String) balanceYearCombo.getSelectedItem();
+        String key = month + " " + year;
+
+        balanceArea.removeAll();
+        balanceArea.setLayout(new BorderLayout());
+        balanceArea.setBackground(new Color(245, 245, 250));
+
+        JPanel mainPanel = new JPanel();
+        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+        mainPanel.setBackground(new Color(245, 245, 250));
+        mainPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+
+        if (monthlyNetSavings.containsKey(key) || monthlyDebts.containsKey(key)) {
+            JPanel savingsCard = createCardPanel("Net Savings");
+            Map<String, String> netSavings = monthlyNetSavings.getOrDefault(key, new HashMap<>());
+
+            JPanel currentMonthPanel = createValuePanel("Current Month",
+                    "CHF " + netSavings.getOrDefault("current", "0"),
+                    new Color(50, 205, 50));
+
+            JPanel fullYearPanel = createValuePanel("Full Year",
+                    "CHF " + netSavings.getOrDefault("year", "0"),
+                    new Color(50, 205, 50));
+
+            savingsCard.add(currentMonthPanel);
+            savingsCard.add(Box.createRigidArea(new Dimension(0, 5)));
+            savingsCard.add(fullYearPanel);
+
+            JLabel trendLabel = new JLabel("Monthly Trend");
+            trendLabel.setFont(new Font("Inter", Font.BOLD, 12));
+            trendLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+            JPanel trendPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+            trendPanel.setBackground(Color.WHITE);
+            trendPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+            savingsCard.add(Box.createRigidArea(new Dimension(0, 10)));
+            savingsCard.add(trendLabel);
+            savingsCard.add(Box.createRigidArea(new Dimension(0, 5)));
+            savingsCard.add(trendPanel);
+
+            String jan = netSavings.getOrDefault("jan", "0");
+            String feb = netSavings.getOrDefault("feb", "0");
+            String mar = netSavings.getOrDefault("mar", "0");
+
+            double janValue = parseDoubleSafe(jan);
+            double febValue = parseDoubleSafe(feb);
+            double marValue = parseDoubleSafe(mar);
+
+            trendPanel.add(createTrendItem("Jan", jan, "-", new Color(100, 100, 100)));
+
+            String febTrend = febValue > janValue ? "▲" : (febValue < janValue ? "▼" : "-");
+            Color febColor = febValue > janValue ? new Color(50, 205, 50) :
+                    (febValue < janValue ? new Color(220, 20, 60) : new Color(100, 100, 100));
+            trendPanel.add(createTrendItem("Feb", feb, febTrend, febColor));
+
+            String marTrend = marValue > febValue ? "▲" : (marValue < febValue ? "▼" : "-");
+            Color marColor = marValue > febValue ? new Color(50, 205, 50) :
+                    (marValue < febValue ? new Color(220, 20, 60) : new Color(100, 100, 100));
+            trendPanel.add(createTrendItem("Mar", mar, marTrend, marColor));
+
+            savingsCard.add(Box.createRigidArea(new Dimension(0, 5)));
+            savingsCard.add(trendPanel);
+
+            mainPanel.add(savingsCard);
+            mainPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+
+            JPanel debtsCard = createCardPanel("Debts");
+            Map<String, String> debts = monthlyDebts.getOrDefault(key, new HashMap<>());
+
+            JPanel creditCardPanel = createValuePanel("Credit Card",
+                    "CHF " + debts.getOrDefault("credit", "0"),
+                    new Color(220, 20, 60));
+
+            JPanel studentLoanPanel = createValuePanel("Student Loan",
+                    "CHF " + debts.getOrDefault("loan", "0"),
+                    new Color(220, 20, 60));
+
+            debtsCard.add(creditCardPanel);
+            debtsCard.add(Box.createRigidArea(new Dimension(0, 5)));
+            debtsCard.add(studentLoanPanel);
+
+            mainPanel.add(debtsCard);
+            mainPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+
+            try {
+                double assets = Double.parseDouble(netSavings.getOrDefault("year", "0"));
+                double totalDebts = Double.parseDouble(debts.getOrDefault("credit", "0")) +
+                        Double.parseDouble(debts.getOrDefault("loan", "0"));
+                double netWorth = assets - totalDebts;
+
+                Color netWorthColor = netWorth >= 0 ? new Color(50, 205, 50) : new Color(220, 20, 60);
+                JPanel netWorthPanel = createValuePanel("Net Worth",
+                        String.format("CHF %.2f", netWorth),
+                        netWorthColor);
+
+                mainPanel.add(netWorthPanel);
+            } catch (NumberFormatException e) {
+                // Ignore invalid numbers
+            }
+        } else {
+            JLabel emptyLabel = new JLabel("No data available. Please enter financial data.");
+            emptyLabel.setFont(new Font("Inter", Font.PLAIN, 12));
+            emptyLabel.setForeground(Color.GRAY);
+            emptyLabel.setHorizontalAlignment(SwingConstants.CENTER);
+            mainPanel.add(emptyLabel);
+        }
+
+        JScrollPane scrollPane = new JScrollPane(mainPanel);
+        scrollPane.setBorder(null);
+        balanceArea.add(scrollPane, BorderLayout.CENTER);
+
+        balanceArea.revalidate();
+        balanceArea.repaint();
+    }
+
+    private double parseDoubleSafe(String value) {
+        try {
+            return Double.parseDouble(value);
+        } catch (NumberFormatException e) {
+            return 0.0;
+        }
+    }
+
+    private JPanel createCardPanel(String title) {
+        JPanel card = new JPanel();
+        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+        card.setBackground(Color.WHITE);
+        card.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(230, 230, 230)),
+                new EmptyBorder(10, 10, 10, 10)
+        ));
+        card.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JLabel titleLabel = new JLabel(title);
+        titleLabel.setFont(new Font("Inter", Font.BOLD, 14));
+        titleLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        card.add(titleLabel);
+        card.add(Box.createRigidArea(new Dimension(0, 5)));
+
+        return card;
+    }
+
+    private JPanel createValuePanel(String label, String value, Color valueColor) {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(Color.WHITE);
+        panel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JLabel labelLabel = new JLabel(label);
+        labelLabel.setFont(new Font("Inter", Font.PLAIN, 12));
+        labelLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+
+
+        JLabel valueLabel = new JLabel(value);
+        valueLabel.setFont(new Font("Inter", Font.BOLD, 14));
+        valueLabel.setForeground(valueColor);
+        valueLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+
+        panel.add(labelLabel, BorderLayout.WEST);
+        panel.add(valueLabel, BorderLayout.EAST);
+
+        return panel;
+    }
+
+    private JPanel createTrendItem(String month, String value, String trendIcon, Color color) {
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBackground(Color.WHITE);
+        panel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JLabel monthLabel = new JLabel(month);
+        monthLabel.setFont(new Font("Inter", Font.PLAIN, 10));
+
+        JLabel valueLabel = new JLabel("CHF " + value);
+        valueLabel.setFont(new Font("Inter", Font.BOLD, 12));
+        valueLabel.setForeground(color);
+
+        JLabel trendLabel = new JLabel(trendIcon);
+        trendLabel.setFont(new Font("Inter", Font.BOLD, 12));
+        trendLabel.setForeground(color);
+
+        panel.add(monthLabel);
+        panel.add(valueLabel);
+        panel.add(trendLabel);
+
+        return panel;
+    }
+
+
+    private void updateExpensesDisplay() {
         if (viewAllLabel == null || expensesArea == null) {
             return;
         }
 
-        // Monospaced Font für exakte Ausrichtung
         expensesArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 14));
 
         String month = (String) monthCombo.getSelectedItem();
@@ -401,17 +567,14 @@ public class FinanceTracker {
 
         StringBuilder sb = new StringBuilder();
         for (String expense : currentExpenses) {
-            // Teile den Eintrag in Datum, Beschreibung und Betrag auf
             String[] parts = expense.split("CHF");
             String dateAndDesc = parts[0].trim();
             String amount = parts.length > 1 ? "CHF" + parts[1].trim() : "CHF0.00";
 
-            // Finde die Position des letzten Leerzeichens, um Datum und Beschreibung zu trennen
             int lastSpace = dateAndDesc.lastIndexOf("  ");
             String date = lastSpace >= 0 ? dateAndDesc.substring(0, lastSpace).trim() : "";
             String description = lastSpace >= 0 ? dateAndDesc.substring(lastSpace).trim() : dateAndDesc;
 
-            // Formatierte Ausgabe mit fester Breite
             sb.append(String.format("%-12s %-25s %10s%n", date, description, amount));
         }
 
@@ -419,7 +582,7 @@ public class FinanceTracker {
         viewAllLabel.setText("View " + currentExpenses.size() + " expenses");
     }
 
-    private static JPanel createBottomNavigation() {
+    private JPanel createBottomNavigation() {
         JPanel navPanel = new JPanel(new GridLayout(1, 3));
         navPanel.setBackground(new Color(230, 230, 250));
         navPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
@@ -431,31 +594,34 @@ public class FinanceTracker {
         return navPanel;
     }
 
-    private static JPanel createMainPanel() {
+    private JPanel createMainPanel() {
         JPanel mainPanel = new JPanel(new BorderLayout());
         mainPanel.setBackground(new Color(245, 245, 250));
 
-        // Header
         JLabel helloLabel = new JLabel("Hello User", SwingConstants.LEFT);
         helloLabel.setFont(new Font("Inter", Font.PLAIN, 18));
         helloLabel.setForeground(new Color(50, 50, 50));
         helloLabel.setBorder(new EmptyBorder(10, 10, 0, 10));
         mainPanel.add(helloLabel, BorderLayout.NORTH);
 
-        // Logo
         try {
-            ImageIcon logoIcon = new ImageIcon("src/main/resources/finance/logo.png");
-            Image image = logoIcon.getImage().getScaledInstance(350, 200, Image.SCALE_SMOOTH);
-            JLabel logoLabel = new JLabel(new ImageIcon(image));
-            logoLabel.setHorizontalAlignment(SwingConstants.CENTER);
-            logoLabel.setBorder(new EmptyBorder(10, 0, 10, 0));
-            mainPanel.add(logoLabel, BorderLayout.CENTER);
+            URL imageUrl = getClass().getResource("/finance/logo.png");
+            if (imageUrl != null) {
+                ImageIcon logoIcon = new ImageIcon(imageUrl);
+                Image image = logoIcon.getImage().getScaledInstance(350, 200, Image.SCALE_SMOOTH);
+                JLabel logoLabel = new JLabel(new ImageIcon(image));
+                logoLabel.setHorizontalAlignment(SwingConstants.CENTER);
+                logoLabel.setBorder(new EmptyBorder(10, 0, 10, 0));
+                mainPanel.add(logoLabel, BorderLayout.CENTER);
+            } else {
+                throw new FileNotFoundException("Resource not found: /finance/logo.png");
+            }
         } catch (Exception e) {
             JLabel errorLabel = new JLabel("Logo not found", SwingConstants.CENTER);
             mainPanel.add(errorLabel, BorderLayout.CENTER);
+            e.printStackTrace();
         }
 
-        // Menu items
         JPanel menuPanel = new JPanel();
         menuPanel.setLayout(new BoxLayout(menuPanel, BoxLayout.Y_AXIS));
         menuPanel.setBackground(new Color(245, 245, 250));
@@ -463,11 +629,7 @@ public class FinanceTracker {
 
         menuPanel.add(createMenuItem("My expenses", " $", () -> cardLayout.show(cardPanel, "expenses")));
         menuPanel.add(Box.createRigidArea(new Dimension(0, 10)));
-        menuPanel.add(createMenuItem("Balance overview", "📈", () -> {
-            cardLayout.show(cardPanel, "balance");
-            // automatisches Update beim Wechsel
-            updateBalanceArea(balanceArea, balanceMonthCombo, balanceYearCombo);
-        }));
+        menuPanel.add(createMenuItem("Balance overview", "📈", () -> cardLayout.show(cardPanel, "balance")));
         menuPanel.add(Box.createRigidArea(new Dimension(0, 10)));
         menuPanel.add(createMenuItem("Saving goals", "🎯", () -> {}));
         menuPanel.add(Box.createRigidArea(new Dimension(0, 10)));
@@ -484,17 +646,14 @@ public class FinanceTracker {
         itemPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
         itemPanel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
-        // Icon
         JLabel iconLabel = new JLabel(iconText);
         iconLabel.setFont(new Font("Inter", Font.PLAIN, 24));
         iconLabel.setForeground(new Color(0, 122, 255));
 
-        // Text
         JLabel textLabel = new JLabel(text);
         textLabel.setFont(new Font("Inter", Font.PLAIN, 16));
         textLabel.setForeground(new Color(30, 30, 30));
 
-        // Content
         JPanel contentPanel = new JPanel();
         contentPanel.setBackground(Color.WHITE);
         contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.X_AXIS));
@@ -505,7 +664,6 @@ public class FinanceTracker {
         itemPanel.add(contentPanel, BorderLayout.WEST);
         itemPanel.add(new JLabel("⋮"), BorderLayout.EAST);
 
-        // Mouse effect
         itemPanel.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
