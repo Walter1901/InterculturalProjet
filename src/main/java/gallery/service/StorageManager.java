@@ -18,7 +18,7 @@ import java.lang.reflect.Type;
  * All data is stored in a single JSON file in the application directory.
  */
 public class StorageManager {
-    private static final String SAVE_FILE = "gallery_data.json";
+    private static final String SAVE_FILE = "gallery_data.json";  // File name for saved data
 
     /**
      * Saves gallery data to a JSON file.
@@ -31,9 +31,13 @@ public class StorageManager {
      */
     public void saveGalleryData(GalleryData data) {
         try (Writer writer = new FileWriter(SAVE_FILE)) {
+            // Create Gson instance with pretty printing for readable JSON
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
+
+            // Convert data object to JSON and write to file
             gson.toJson(data, writer);
         } catch (IOException e) {
+            // Log error if save fails
             e.printStackTrace();
             System.err.println("Error saving gallery data: " + e.getMessage());
         }
@@ -50,18 +54,24 @@ public class StorageManager {
      */
     public GalleryData loadGalleryData() {
         File file = new File(SAVE_FILE);
+
+        // Check if save file exists
         if (!file.exists()) {
             System.out.println("No gallery data file found. Starting with empty gallery.");
-            return null;
+            return null;  // Return null to indicate no data available
         }
 
         try (Reader reader = new FileReader(file)) {
+            // Define the type for deserialization
             Type type = new TypeToken<GalleryData>() {}.getType();
+
+            // Parse JSON file into GalleryData object
             return new Gson().fromJson(reader, type);
         } catch (IOException e) {
+            // Log error if load fails
             e.printStackTrace();
             System.err.println("Error loading gallery data: " + e.getMessage());
-            return null;
+            return null;  // Return null to indicate loading failed
         }
     }
 }

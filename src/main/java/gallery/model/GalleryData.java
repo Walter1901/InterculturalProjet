@@ -13,16 +13,17 @@ import java.util.Map;
  * easily serialized to and deserialized from JSON format.
  */
 public class GalleryData {
-    // Stocke les chemins d'images par album
+    // Stores image paths by album name
     private Map<String, List<String>> albumData = new HashMap<>();
 
-    // Stocke les filtres appliqués à chaque image
+    // Stores applied filters by image path
     private Map<String, String> imageFilters = new HashMap<>();
 
     /**
      * Creates a new empty GalleryData instance.
      */
     public GalleryData() {
+        // Empty constructor, fields initialized with default values
     }
 
     /**
@@ -34,7 +35,7 @@ public class GalleryData {
      * @return Map of album names to lists of image paths
      */
     public Map<String, List<String>> getAlbumData() {
-        return albumData;
+        return albumData;  // Return the album data map
     }
 
     /**
@@ -46,7 +47,7 @@ public class GalleryData {
      * @param albumData Map of album names to lists of image paths
      */
     public void setAlbumData(Map<String, List<String>> albumData) {
-        this.albumData = albumData;
+        this.albumData = albumData;  // Store the provided album data
     }
 
     /**
@@ -58,7 +59,7 @@ public class GalleryData {
      * @return Map of image paths to filter names
      */
     public Map<String, String> getImageFilters() {
-        return imageFilters;
+        return imageFilters;  // Return the filter data map
     }
 
     /**
@@ -70,6 +71,6 @@ public class GalleryData {
      * @param imageFilters Map of image paths to filter names
      */
     public void setImageFilters(Map<String, String> imageFilters) {
-        this.imageFilters = imageFilters;
+        this.imageFilters = imageFilters;  // Store the provided filter data
     }
 }

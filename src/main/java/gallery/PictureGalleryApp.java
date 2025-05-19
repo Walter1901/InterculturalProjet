@@ -26,14 +26,14 @@ import javax.swing.*;
  * - GalleryUI - Provides the user interface
  */
 public class PictureGalleryApp {
-    // Gestionnaires
-    private GalleryUI ui;
-    private AlbumManager albumManager;
-    private ImageManager imageManager;
-    private StorageManager storageManager;
-    private ContactLinkManager contactLinkManager;
+    // Managers for different aspects of the application
+    private GalleryUI ui;                        // Handles all user interface components and interactions
+    private AlbumManager albumManager;           // Manages album creation, deletion, and organization
+    private ImageManager imageManager;           // Handles image operations like loading, filtering, and resizing
+    private StorageManager storageManager;       // Manages saving and loading data from disk
+    private ContactLinkManager contactLinkManager;// Links images to contacts in the address book
 
-    // État de l'application
+    // Application state variables
     private String currentAlbum = "default";
 
     /**
@@ -49,11 +49,17 @@ public class PictureGalleryApp {
      * 5. GalleryUI - Depends on all other components
      */
     public PictureGalleryApp() {
-        // Initialiser les différents gestionnaires dans l'ordre des dépendances
-        storageManager = new StorageManager();
-        imageManager = new ImageManager();
+        // Initialize the components in the correct dependency order
+        storageManager = new StorageManager();    // Create storage manager first (no dependencies)
+        imageManager = new ImageManager();        // Create image manager (no dependencies)
+
+        // Create album manager with its dependencies
         albumManager = new AlbumManager(imageManager, storageManager);
+
+        // Create contact link manager (no dependencies)
         contactLinkManager = new ContactLinkManager();
+
+        // Finally create UI with all its dependencies
         ui = new GalleryUI(this, albumManager, imageManager);
     }
 
@@ -68,15 +74,16 @@ public class PictureGalleryApp {
      * @return A JPanel containing the complete gallery interface
      */
     public JPanel createPictureGallery() {
-        // Créer l'interface
+        // Create the main user interface panel
         JPanel mainPanel = ui.createMainInterface();
 
-        // Initialiser l'album par défaut
+        // Set up the default album for when the app starts
         albumManager.initializeDefaultAlbum();
 
-        // Charger les données existantes
+        // Load any previously saved gallery data
         loadGallery();
 
+        // Return the fully configured interface
         return mainPanel;
     }
 
@@ -88,14 +95,21 @@ public class PictureGalleryApp {
      * is found, the application starts with an empty gallery.
      */
     private void loadGallery() {
+        // Attempt to load saved data from disk
         GalleryData data = storageManager.loadGalleryData();
+
+        // If data was found, populate the gallery with it
         if (data != null) {
+            // Set album structure from loaded data
             albumManager.setAlbumData(data.getAlbumData());
+
+            // Apply saved image filters
             imageManager.setFilterData(data.getImageFilters());
 
-            // Actualiser l'interface
+            // Update the UI to reflect loaded data
             ui.refreshGalleryFromData();
         }
+        // If no data was found, the gallery starts empty
     }
 
     /**
@@ -105,9 +119,16 @@ public class PictureGalleryApp {
      * persists it to storage for future retrieval.
      */
     public void saveGallery() {
+        // Create a container for all gallery data
         GalleryData data = new GalleryData();
+
+        // Collect album structure
         data.setAlbumData(albumManager.getAlbumData());
+
+        // Collect image filter information
         data.setImageFilters(imageManager.getFilterData());
+
+        // Save everything to disk
         storageManager.saveGalleryData(data);
     }
 
@@ -117,7 +138,7 @@ public class PictureGalleryApp {
      * @return The name of the current album
      */
     public String getCurrentAlbum() {
-        return currentAlbum;
+        return currentAlbum;  // Return the name of the album currently being viewed
     }
 
     /**
@@ -126,6 +147,6 @@ public class PictureGalleryApp {
      * @param albumName The name of the album to set as current
      */
     public void setCurrentAlbum(String albumName) {
-        this.currentAlbum = albumName;
+        this.currentAlbum = albumName;  // Update which album is currently being viewed
     }
 }

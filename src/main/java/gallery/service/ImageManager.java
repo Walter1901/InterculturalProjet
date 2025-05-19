@@ -25,13 +25,13 @@ import java.util.List;
  * - Maintaining original image data
  */
 public class ImageManager {
-    // Stockage des images et filtres
-    private Map<JLabel, Image> originalImages = new HashMap<>();
-    private Map<JLabel, String> appliedFilters = new HashMap<>();
+    // Data structures for state management
+    private Map<JLabel, Image> originalImages = new HashMap<>();  // Store original versions of images
+    private Map<JLabel, String> appliedFilters = new HashMap<>(); // Track which filter is applied to each image
 
-    // Références aux composants d'interface
-    private JLabel fullImageLabel;
-    private JComboBox<String> filterComboBox;
+    // References to UI components
+    private JLabel fullImageLabel;      // Label that displays full-size image
+    private JComboBox<String> filterComboBox; // Dropdown for selecting filters
 
     /**
      * Registers UI components for full-screen image display.
@@ -40,8 +40,8 @@ public class ImageManager {
      * @param filterComboBox The combo box for selecting image filters
      */
     public void registerFullScreenComponents(JLabel fullImageLabel, JComboBox<String> filterComboBox) {
-        this.fullImageLabel = fullImageLabel;
-        this.filterComboBox = filterComboBox;
+        this.fullImageLabel = fullImageLabel;       // Store reference to the full image display
+        this.filterComboBox = filterComboBox;       // Store reference to the filter selector
     }
 
     /**
@@ -56,56 +56,64 @@ public class ImageManager {
      * @return A JLabel containing the image thumbnail
      */
     public JLabel createImageLabel(String resourcePath, JPanel albumPanel) {
+        // Create a new label for the image
         JLabel label = new JLabel();
-        label.setHorizontalAlignment(SwingConstants.CENTER);
+        label.setHorizontalAlignment(SwingConstants.CENTER);  // Center the image in the label
 
         try {
+            // Try to load the image from the resources
             URL imageUrl = getClass().getResource(resourcePath);
             if (imageUrl != null) {
+                // If found, read the image
                 Image image = ImageIO.read(imageUrl);
                 if (image != null) {
-                    // Créer la miniature
+                    // Create a thumbnail (scaled to 100x100 pixels)
                     Image scaledImage = image.getScaledInstance(100, 100, Image.SCALE_SMOOTH);
-                    label.setIcon(new ImageIcon(scaledImage));
+                    label.setIcon(new ImageIcon(scaledImage));  // Set as the label's icon
 
-                    // Stocker l'image originale
+                    // Store the original image for later use (filters, resize)
                     originalImages.put(label, image);
                 } else {
+                    // If image couldn't be loaded, show error text
                     label.setText("Invalid image");
                 }
             } else {
+                // If resource doesn't exist, show error text
                 label.setText("Not found");
             }
         } catch (Exception e) {
+            // If any exception occurs, show error text
             e.printStackTrace();
             label.setText("Error: " + e.getMessage());
         }
 
-        // Stocker des métadonnées sur l'étiquette
-        label.putClientProperty("albumPanel", albumPanel);
-        label.putClientProperty("resourcePath", resourcePath);
+        // Store metadata with the label
+        label.putClientProperty("albumPanel", albumPanel);     // Remember which album panel this belongs to
+        label.putClientProperty("resourcePath", resourcePath); // Remember the path to the image file
 
-        // Ajouter un écouteur pour l'affichage plein écran
+        // Add mouse listener to handle clicks (for full-screen view)
         label.addMouseListener(new MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent e) {
-                showFullScreenImage(label);
+                showFullScreenImage(label);  // Show this image in full-screen when clicked
             }
         });
 
-        // Configurer le support de drag-and-drop
+        // Configure drag and drop support
         new java.awt.dnd.DragSource().createDefaultDragGestureRecognizer(
-                label,
-                java.awt.dnd.DnDConstants.ACTION_COPY,
+                label,                        // Component that can be dragged
+                java.awt.dnd.DnDConstants.ACTION_COPY,  // Allow copy operations
                 dge -> {
+                    // Get the image path when drag starts
                     String path = (String) label.getClientProperty("resourcePath");
+                    // Start the drag operation with the path as the transferable data
                     dge.startDrag(
-                            java.awt.dnd.DragSource.DefaultCopyDrop,
-                            new java.awt.datatransfer.StringSelection(path)
+                            java.awt.dnd.DragSource.DefaultCopyDrop,  // Show copy cursor
+                            new java.awt.datatransfer.StringSelection(path)  // Use path as data
                     );
                 }
         );
 
-        return label;
+        return label;  // Return the configured image label
     }
 
     /**
@@ -114,30 +122,33 @@ public class ImageManager {
      * @param label The label containing the image to display
      */
     private void showFullScreenImage(JLabel label) {
+        // Make sure we have a place to show the full image
         if (fullImageLabel == null) return;
 
+        // Check if the label has an icon (image)
         if (label.getIcon() instanceof ImageIcon) {
             ImageIcon currentIcon = (ImageIcon) label.getIcon();
 
-            // Afficher l'image en plein écran
+            // Create a larger version for full-screen view (300x300 pixels)
             fullImageLabel.setIcon(new ImageIcon(
                     currentIcon.getImage().getScaledInstance(300, 300, Image.SCALE_SMOOTH)
             ));
 
-            // Stocker l'étiquette d'origine pour référence
+            // Store a reference to the original label
             fullImageLabel.putClientProperty("originLabel", label);
 
-            // Mettre à jour le filtre sélectionné
+            // Update the filter dropdown to show current filter
             if (filterComboBox != null) {
+                // Get the current filter or "None" if none applied
                 String currentFilter = appliedFilters.getOrDefault(label, "None");
-                filterComboBox.setSelectedItem(currentFilter);
+                filterComboBox.setSelectedItem(currentFilter);  // Select it in the dropdown
             }
 
-            // Afficher la vue plein écran (via le composant parent)
+            // Show the full-screen view by switching CardLayout
             Container parent = fullImageLabel.getParent().getParent();
             if (parent instanceof JPanel) {
                 CardLayout layout = (CardLayout) ((JPanel) parent).getLayout();
-                layout.show((JPanel) parent, "full");
+                layout.show((JPanel) parent, "full");  // Show the "full" card
             }
         }
     }
@@ -153,28 +164,32 @@ public class ImageManager {
      * @param filterName Name of the filter to apply ("None", "Grayscale", "Sepia", "Invert")
      */
     public void applyFilter(JLabel originLabel, JLabel fullScreenLabel, String filterName) {
+        // Verify we have a valid label with an icon
         if (originLabel == null || !(originLabel.getIcon() instanceof ImageIcon)) return;
 
-        // Récupérer ou stocker l'image originale
+        // Ensure we have the original image stored
         if (!originalImages.containsKey(originLabel)) {
             originalImages.put(originLabel, ((ImageIcon) originLabel.getIcon()).getImage());
         }
 
+        // Get the original unfiltered image
         Image original = originalImages.get(originLabel);
         if (original == null) return;
 
+        // Get dimensions
         int width = original.getWidth(null);
         int height = original.getHeight(null);
 
+        // Ensure dimensions are valid
         if (width <= 0 || height <= 0) return;
 
-        // Créer une image buffer pour manipuler les pixels
+        // Create a buffer image to apply filters
         BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
         Graphics2D g2d = img.createGraphics();
-        g2d.drawImage(original, 0, 0, null);
+        g2d.drawImage(original, 0, 0, null);  // Draw original into buffer
         g2d.dispose();
 
-        // Appliquer le filtre sélectionné
+        // Apply the selected filter
         if (!"None".equals(filterName)) {
             switch (filterName) {
                 case "Grayscale":
@@ -189,17 +204,18 @@ public class ImageManager {
             }
         }
 
-        // Enregistrer le filtre appliqué
+        // Remember which filter was applied
         appliedFilters.put(originLabel, filterName);
 
-        // Mettre à jour les affichages
+        // Create scaled versions for thumbnail and full view
         Image thumbnailImage = img.getScaledInstance(100, 100, Image.SCALE_SMOOTH);
         Image fullScreenImage = img.getScaledInstance(300, 300, Image.SCALE_SMOOTH);
 
+        // Update both displays
         originLabel.setIcon(new ImageIcon(thumbnailImage));
         fullScreenLabel.setIcon(new ImageIcon(fullScreenImage));
 
-        // Rafraîchir le panel d'album
+        // Refresh the album panel
         JPanel albumPanel = (JPanel) originLabel.getClientProperty("albumPanel");
         if (albumPanel != null) {
             albumPanel.revalidate();
@@ -218,14 +234,23 @@ public class ImageManager {
         int width = img.getWidth();
         int height = img.getHeight();
 
+        // Process each pixel
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
-                int rgb = img.getRGB(x, y);
+                int rgb = img.getRGB(x, y);  // Get pixel color
+
+                // Extract RGB components
                 int r = (rgb >> 16) & 0xFF;
                 int g = (rgb >> 8) & 0xFF;
                 int b = rgb & 0xFF;
+
+                // Convert to grayscale by averaging the components
                 int gray = (r + g + b) / 3;
+
+                // Create new RGB value with equal R, G, and B
                 int newRGB = (gray << 16) | (gray << 8) | gray;
+
+                // Set the pixel's new color
                 img.setRGB(x, y, newRGB);
             }
         }
@@ -242,16 +267,25 @@ public class ImageManager {
         int width = img.getWidth();
         int height = img.getHeight();
 
+        // Process each pixel
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
-                int rgb = img.getRGB(x, y);
+                int rgb = img.getRGB(x, y);  // Get pixel color
+
+                // Extract RGB components
                 int r = (rgb >> 16) & 0xFF;
                 int g = (rgb >> 8) & 0xFF;
                 int b = rgb & 0xFF;
+
+                // Apply sepia formula
                 int tr = Math.min(255, (int) (0.393 * r + 0.769 * g + 0.189 * b));
                 int tg = Math.min(255, (int) (0.349 * r + 0.686 * g + 0.168 * b));
                 int tb = Math.min(255, (int) (0.272 * r + 0.534 * g + 0.131 * b));
+
+                // Create new RGB value
                 int newRGB = (tr << 16) | (tg << 8) | tb;
+
+                // Set the pixel's new color
                 img.setRGB(x, y, newRGB);
             }
         }
@@ -268,13 +302,20 @@ public class ImageManager {
         int width = img.getWidth();
         int height = img.getHeight();
 
+        // Process each pixel
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
-                int rgb = img.getRGB(x, y);
+                int rgb = img.getRGB(x, y);  // Get pixel color
+
+                // Extract RGB components and invert them (255 - value)
                 int r = 255 - ((rgb >> 16) & 0xFF);
                 int g = 255 - ((rgb >> 8) & 0xFF);
                 int b = 255 - (rgb & 0xFF);
+
+                // Create new RGB value
                 int newRGB = (r << 16) | (g << 8) | b;
+
+                // Set the pixel's new color
                 img.setRGB(x, y, newRGB);
             }
         }
@@ -289,18 +330,19 @@ public class ImageManager {
      * @param height The new height for the image
      */
     public void resizeImage(JLabel originLabel, JLabel fullScreenLabel, int width, int height) {
+        // Check if we have a valid label with an image
         if (originLabel != null && originLabel.getIcon() instanceof ImageIcon) {
             ImageIcon oldIcon = (ImageIcon) originLabel.getIcon();
 
-            // Redimensionner l'image
+            // Create resized version of the image
             Image resizedImage = oldIcon.getImage().getScaledInstance(width, height, Image.SCALE_SMOOTH);
             ImageIcon resizedIcon = new ImageIcon(resizedImage);
 
-            // Mettre à jour les affichages
+            // Update both displays
             fullScreenLabel.setIcon(resizedIcon);
             originLabel.setIcon(resizedIcon);
 
-            // Rafraîchir le panel d'album
+            // Refresh the album panel
             JPanel albumPanel = (JPanel) originLabel.getClientProperty("albumPanel");
             if (albumPanel != null) {
                 albumPanel.revalidate();
@@ -315,31 +357,40 @@ public class ImageManager {
      * @return An array of image resource paths
      */
     public String[] getImageResourcePaths() {
+        // Define the resource folder to look in
         String folder = "/imageGallery";
         URL dirURL = getClass().getResource(folder);
 
+        // Check if directory exists
         if (dirURL == null) {
             System.out.println("Resource directory not found: " + folder);
-            return new String[0];
+            return new String[0];  // Return empty array if not found
         }
 
+        // Get the directory as a File object
         File directory = new File(dirURL.getFile());
+
+        // Get all image files using a filter for common image extensions
         File[] files = directory.listFiles((dir, name) ->
                 name.toLowerCase().endsWith(".jpg") ||
                         name.toLowerCase().endsWith(".png") ||
                         name.toLowerCase().endsWith(".jpeg") ||
                         name.toLowerCase().endsWith(".gif"));
 
+        // Check if files were found
         if (files == null) {
             System.out.println("No files found in directory: " + directory.getAbsolutePath());
-            return new String[0];
+            return new String[0];  // Return empty array if no files
         }
 
+        // Create a list of resource paths
         List<String> result = new ArrayList<>();
         for (File file : files) {
+            // Convert to resource path format
             result.add(folder + "/" + file.getName());
         }
 
+        // Convert list to array and return
         return result.toArray(new String[0]);
     }
 
@@ -351,16 +402,18 @@ public class ImageManager {
     public Map<String, String> getFilterData() {
         Map<String, String> filterData = new HashMap<>();
 
+        // For each image with a filter, store the filter by path
         for (Map.Entry<JLabel, String> entry : appliedFilters.entrySet()) {
             JLabel label = entry.getKey();
             String path = (String) label.getClientProperty("resourcePath");
 
+            // Save the filter if path is available
             if (path != null) {
                 filterData.put(path, entry.getValue());
             }
         }
 
-        return filterData;
+        return filterData;  // Return map of paths to filter names
     }
 
     /**
@@ -369,7 +422,8 @@ public class ImageManager {
      * @param filterData A map of image paths to their applied filters
      */
     public void setFilterData(Map<String, String> filterData) {
+        // Clear existing filter data
         this.appliedFilters.clear();
-        // Les filtres seront appliqués lors du chargement des images
+        // Filters will be applied when images are loaded
     }
 }

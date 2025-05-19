@@ -10,25 +10,28 @@ import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 
-
+/**
+ * Manages the albums in the gallery application.
+ */
 public class AlbumManager {
-    private ImageManager imageManager;
-    private StorageManager storageManager;
+    // Dependencies
+    private ImageManager imageManager;       // Used for image operations
+    private StorageManager storageManager;   // Used for saving data
 
-    // Stockage des albums
-    private Map<String, Album> albums = new HashMap<>();
+    // Data structures
+    private Map<String, Album> albums = new HashMap<>();  // Store all albums by name
 
-    // Références aux panneaux d'interface
-    private JPanel galleryPanel;
-    private JPanel albumBar;
+    // UI references
+    private JPanel galleryPanel;  // Panel where images are displayed
+    private JPanel albumBar;      // Panel where album thumbnails are shown
 
     /**
      * Manages the albums in the gallery application.
-     *
+     * <p>
      * This class is responsible for creating, updating, and deleting albums,
      * as well as managing the images within each album. It handles the organization
      * of images into logical collections and provides methods for album manipulation.
-     *
+     * <p>
      * Key responsibilities:
      * - Creating and managing album data structures
      * - Adding and removing images from albums
@@ -36,19 +39,19 @@ public class AlbumManager {
      * - Handling drag-and-drop functionality between albums
      */
     public AlbumManager(ImageManager imageManager, StorageManager storageManager) {
-        this.imageManager = imageManager;
-        this.storageManager = storageManager;
+        this.imageManager = imageManager;        // Store reference to image manager
+        this.storageManager = storageManager;    // Store reference to storage manager
     }
 
     /**
      * Registers the UI panels used by the album manager.
      *
      * @param galleryPanel The main panel that displays images
-     * @param albumBar The panel that displays album thumbnails
+     * @param albumBar     The panel that displays album thumbnails
      */
     public void registerPanels(JPanel galleryPanel, JPanel albumBar) {
-        this.galleryPanel = galleryPanel;
-        this.albumBar = albumBar;
+        this.galleryPanel = galleryPanel;  // Remember the main display panel
+        this.albumBar = albumBar;          // Remember the album bar panel
     }
 
     /**
@@ -56,9 +59,11 @@ public class AlbumManager {
      * The default album is used when no specific album is selected.
      */
     public void initializeDefaultAlbum() {
+        // Check if default album already exists
         if (!albums.containsKey("default")) {
+            // Create new default album using the main gallery panel
             Album defaultAlbum = new Album("default", galleryPanel);
-            albums.put("default", defaultAlbum);
+            albums.put("default", defaultAlbum);  // Store in the albums collection
         }
     }
 
@@ -69,151 +74,160 @@ public class AlbumManager {
      * @return true if the album was created, false if it already existed
      */
     public boolean createAlbumIfNotExists(String name) {
+        // Check if the album already exists
         if (!albums.containsKey(name)) {
-            // Créer le panel pour l'album
+            // Create a panel for the new album with grid layout (2 columns with spacing)
             JPanel albumPanel = new JPanel(new GridLayout(0, 2, 10, 10));
-            albumPanel.setBackground(Color.WHITE);
+            albumPanel.setBackground(Color.WHITE);  // Set white background
 
-            // Créer l'album
+            // Create the album object
             Album album = new Album(name, albumPanel);
-            albums.put(name, album);
+            albums.put(name, album);  // Add to our collection of albums
 
-            // Créer la vignette de l'album
+            // Create a thumbnail for the album that will appear in the album bar
             JLabel thumbnail = createAlbumThumbnail(name, albumPanel);
-            album.setThumbnail(thumbnail);
+            album.setThumbnail(thumbnail);  // Link thumbnail to album
 
-            // Ajouter la vignette à la barre d'albums
+            // Add the thumbnail to the album bar at the bottom of the screen
             albumBar.add(thumbnail);
-            albumBar.revalidate();
-            albumBar.repaint();
+            albumBar.revalidate();  // Update layout
+            albumBar.repaint();     // Redraw component
 
+            // Show confirmation message
             JOptionPane.showMessageDialog(null,
                     "Album '" + name + "' created successfully!",
                     "Album Created",
                     JOptionPane.INFORMATION_MESSAGE);
 
-            return true;
+            return true;  // Album was created
         }
-        return false;
+        return false;  // Album already existed
     }
 
     /**
      * Creates a thumbnail label for an album.
-     *
+     * <p>
      * The thumbnail includes the album name and is configured to support
      * drag-and-drop operations. Click events on the thumbnail will open
      * the corresponding album view.
      *
-     * @param albumName Name of the album
+     * @param albumName  Name of the album
      * @param albumPanel The panel containing the album's images
      * @return A JLabel serving as the album thumbnail
      */
     private JLabel createAlbumThumbnail(String albumName, JPanel albumPanel) {
-        // Créer la vignette avec le nom de l'album
+        // Create a label with the album name, centered
         JLabel thumbnail = new JLabel(albumName, JLabel.CENTER);
-        thumbnail.setVerticalTextPosition(JLabel.BOTTOM);
-        thumbnail.setHorizontalTextPosition(JLabel.CENTER);
-        thumbnail.setPreferredSize(new Dimension(100, 120));
-        thumbnail.setFont(new Font("Arial", Font.BOLD, 14));
-        thumbnail.setOpaque(true);
-        thumbnail.setBackground(new Color(240, 240, 240));
-        thumbnail.setBorder(BorderFactory.createLineBorder(Color.GRAY));
 
-        // Configurer le gestionnaire de glisser-déposer
+        // Configure the appearance of the label
+        thumbnail.setVerticalTextPosition(JLabel.BOTTOM);      // Text below icon
+        thumbnail.setHorizontalTextPosition(JLabel.CENTER);    // Text centered
+        thumbnail.setPreferredSize(new Dimension(100, 120));   // Set a fixed size
+        thumbnail.setFont(new Font("Arial", Font.BOLD, 14));   // Bold text
+        thumbnail.setOpaque(true);                             // Fill background
+        thumbnail.setBackground(new Color(240, 240, 240));     // Light gray background
+        thumbnail.setBorder(BorderFactory.createLineBorder(Color.GRAY)); // Gray border
+
+        // Set up drag and drop handling
         thumbnail.setTransferHandler(createAlbumTransferHandler(albumName, albumPanel, thumbnail));
 
-        // Ajouter un écouteur de clic pour ouvrir l'album
+        // Add mouse listener to handle clicks
         thumbnail.addMouseListener(createAlbumMouseListener(albumName, albumPanel, thumbnail));
 
-        // Configurer le support de drag-and-drop
+        // Set up drag source capabilities
         new DragSource().createDefaultDragGestureRecognizer(thumbnail,
                 DnDConstants.ACTION_COPY, dge -> {
-                    // Permettre aux images d'être glissées depuis cet album
+                    // Allow images to be dragged from this album
+                    // This is a placeholder gesture recognizer
                 });
 
-        return thumbnail;
+        return thumbnail;  // Return the configured thumbnail
     }
 
     /**
      * Creates a TransferHandler for album thumbnails to support drag-and-drop.
-     *
+     * <p>
      * This handler allows images to be dragged from other parts of the application
      * and dropped onto an album thumbnail, adding them to that album.
      *
-     * @param albumName Name of the target album
+     * @param albumName  Name of the target album
      * @param albumPanel Panel containing the album's images
-     * @param thumbnail The album's thumbnail label
+     * @param thumbnail  The album's thumbnail label
      * @return A TransferHandler configured for the album
      */
     private TransferHandler createAlbumTransferHandler(String albumName, JPanel albumPanel, JLabel thumbnail) {
         return new TransferHandler("text") {
             public boolean canImport(TransferSupport support) {
+                // Only accept string data (image paths)
                 return support.isDataFlavorSupported(DataFlavor.stringFlavor);
             }
 
             public boolean importData(TransferSupport support) {
                 try {
-                    // Récupérer le chemin de l'image glissée
+                    // Get the dropped image path from the transferable
                     String path = (String) support.getTransferable().getTransferData(DataFlavor.stringFlavor);
 
-                    // Créer une étiquette pour l'image
+                    // Use the ImageManager to create a label for the image
                     JLabel newLabel = imageManager.createImageLabel(path, albumPanel);
 
-                    // Vérifier que l'étiquette a été créée avec succès
+                    // Verify the image was loaded successfully
                     if (newLabel.getIcon() == null) {
                         System.err.println("Failed to create image label for: " + path);
-                        return false;
+                        return false;  // Image couldn't be loaded
                     }
 
-                    // Ajouter l'image à l'album
+                    // Get the album object and add the image to it
                     Album album = albums.get(albumName);
-                    album.addImage(path);
-                    albumPanel.add(newLabel);
-                    albumPanel.revalidate();
-                    albumPanel.repaint();
+                    album.addImage(path);  // Add image path to album data
 
-                    // Utiliser la première image comme vignette d'album si nécessaire
+                    // Add the image to the album's panel
+                    albumPanel.add(newLabel);
+                    albumPanel.revalidate();  // Update layout
+                    albumPanel.repaint();     // Redraw component
+
+                    // Use the first image as album thumbnail if this is the first image
                     if (album.getImagePaths().size() == 1 && newLabel.getIcon() instanceof ImageIcon) {
                         thumbnail.setIcon((ImageIcon) newLabel.getIcon());
                     }
 
-                    // Sauvegarder les modifications
+                    // Save the changes to persistent storage
                     storageManager.saveGalleryData(
                             new gallery.model.GalleryData()
                     );
-                    return true;
+                    return true;  // Drop was successful
                 } catch (Exception ex) {
+                    // Log and show any errors
                     ex.printStackTrace();
                     JOptionPane.showMessageDialog(null,
                             "Error during drag & drop: " + ex.getMessage(),
                             "Error",
                             JOptionPane.ERROR_MESSAGE);
                 }
-                return false;
+                return false;  // Drop failed
             }
         };
     }
 
     /**
      * Creates a MouseListener for album thumbnails.
-     *
+     * <p>
      * When an album thumbnail is clicked, this listener either shows an existing
      * album view or creates a new one if it doesn't exist yet. The album view
      * includes navigation controls and displays all images in the album.
      *
-     * @param albumName Name of the album
+     * @param albumName  Name of the album
      * @param albumPanel Panel containing the album's images
-     * @param thumbnail The album's thumbnail label
+     * @param thumbnail  The album's thumbnail label
      * @return A MouseAdapter for handling click events
      */
     private MouseAdapter createAlbumMouseListener(String albumName, JPanel albumPanel, JLabel thumbnail) {
         return new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
-                // Chercher le panel principal contenant le CardLayout
+                // Find the main panel containing the CardLayout
                 Component component = thumbnail;
                 Container mainPanel = null;
 
-                // Rechercher le conteneur principal dans la hiérarchie des composants
+                // Walk up the component hierarchy to find the CardLayout container
                 while (component != null) {
                     Container parent = component.getParent();
                     if (parent != null && parent.getLayout() instanceof CardLayout) {
@@ -223,67 +237,73 @@ public class AlbumManager {
                     component = parent;
                 }
 
+                // If we didn't find a CardLayout, we can't show the album
                 if (mainPanel == null) {
                     System.err.println("Could not find main panel with CardLayout");
                     return;
                 }
 
+                // Get the CardLayout from the main panel
                 CardLayout cardLayout = (CardLayout) mainPanel.getLayout();
 
-                // Chercher une vue d'album existante ou en créer une nouvelle
+                // Check if we already have a view for this album
                 boolean viewExists = false;
-                String viewName = "albumView_" + albumName;
+                String viewName = "albumView_" + albumName;  // Naming convention for album views
 
+                // Look through all components to find an existing view
                 for (Component comp : mainPanel.getComponents()) {
                     if (comp instanceof JPanel && comp.getName() != null &&
                             comp.getName().equals(viewName)) {
                         viewExists = true;
-                        cardLayout.show(mainPanel, viewName); // Utiliser le nom de la vue comme identifiant
+                        cardLayout.show(mainPanel, viewName);  // Show existing view
                         break;
                     }
                 }
 
-                // Si la vue n'existe pas, la créer
+                // If no view exists, create a new one
                 if (!viewExists) {
+                    // Create a panel for the album view
                     JPanel albumView = new JPanel(new BorderLayout());
-                    albumView.setName(viewName);
+                    albumView.setName(viewName);  // Set name to match our convention
                     albumView.setBackground(Color.WHITE);
 
-                    // Barre de navigation supérieure
+                    // Create top navigation bar
                     JPanel topBar = new JPanel(new BorderLayout());
                     topBar.setBackground(Color.WHITE);
 
-                    // Bouton de retour
+                    // Add back button on the left
                     JPanel leftButtons = new JPanel(new FlowLayout(FlowLayout.LEFT));
                     leftButtons.setBackground(Color.WHITE);
                     JButton backBtn = new JButton("Back");
+
+                    // Store reference to mainPanel for the action listener
                     Container finalMainPanel = mainPanel;
                     backBtn.addActionListener(ev -> cardLayout.show(finalMainPanel, "main"));
                     leftButtons.add(backBtn);
 
-                    // Bouton de suppression d'album
+                    // Add delete album button on the right
                     JPanel rightButtons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
                     rightButtons.setBackground(Color.WHITE);
                     JButton deleteAlbumBtn = new JButton("Delete Album");
-                    deleteAlbumBtn.setBackground(new Color(255, 100, 100));
+                    deleteAlbumBtn.setBackground(new Color(255, 100, 100));  // Red background
                     deleteAlbumBtn.addActionListener(ev -> deleteAlbum(albumName, thumbnail));
                     rightButtons.add(deleteAlbumBtn);
 
-                    // Ajouter les boutons à la barre
+                    // Add button panels to the top bar
                     topBar.add(leftButtons, BorderLayout.WEST);
                     topBar.add(rightButtons, BorderLayout.EAST);
 
-                    // Titre de l'album
+                    // Add album title in the center
                     JLabel titleLabel = new JLabel("Album: " + albumName, JLabel.CENTER);
                     titleLabel.setFont(new Font("Arial", Font.BOLD, 16));
                     topBar.add(titleLabel, BorderLayout.CENTER);
 
-                    // Ajouter les composants à la vue
+                    // Assemble the view with top bar and album panel
                     albumView.add(topBar, BorderLayout.NORTH);
                     albumView.add(albumPanel, BorderLayout.CENTER);
 
-                    // Ajouter la vue au panel principal
-                    mainPanel.add(albumView, viewName); // Attention: utiliser viewName comme identifiant
+                    // Add the new view to the main panel and show it
+                    mainPanel.add(albumView, viewName);
                     cardLayout.show(mainPanel, viewName);
                 }
             }
@@ -292,7 +312,7 @@ public class AlbumManager {
 
     /**
      * Adds an image to the specified album.
-     *
+     * <p>
      * The image is first compressed using TinyPNG, then added to the specified
      * album. If the album doesn't exist, the default album is used.
      *
@@ -300,44 +320,46 @@ public class AlbumManager {
      * @param imagePath Path to the image resource
      */
     public void addImageToAlbum(String albumName, String imagePath) {
-        // Compresser l'image avant de l'ajouter
+        // Compress the image before adding it
         TinyPNGService tinyPNGService = new TinyPNGService();
         File originalFile = new File("src/main/resources" + imagePath);
         File compressedFile = tinyPNGService.compressImage(originalFile);
 
-        // Convertir le chemin absolu en chemin relatif
+        // Convert absolute path to relative path
         String relativePath = "/imageGallery/" + compressedFile.getName();
 
-        // Récupérer ou créer l'album cible
+        // Determine which album to use
         String targetAlbum = albumName;
         if (targetAlbum == null || targetAlbum.equals("main")) {
-            targetAlbum = "default";
+            targetAlbum = "default";  // Use default album if none specified
         }
 
+        // Get or create the target album
         Album album = albums.get(targetAlbum);
         if (album == null) {
-            // Si l'album n'existe pas, utiliser l'album par défaut
+            // If album doesn't exist, use the default album
             album = albums.get("default");
             if (album == null) {
-                // Créer l'album par défaut si nécessaire
+                // Create default album if needed
                 album = new Album("default", galleryPanel);
                 albums.put("default", album);
             }
         }
 
-        // Créer l'étiquette pour l'image et l'ajouter au panel
+        // Create an image label and add it to the panel
         JPanel targetPanel = album.getPanel();
         JLabel imgLabel = imageManager.createImageLabel(relativePath, targetPanel);
 
+        // If image loaded successfully, add it to the album
         if (imgLabel.getIcon() != null) {
             targetPanel.add(imgLabel);
-            targetPanel.revalidate();
-            targetPanel.repaint();
+            targetPanel.revalidate();  // Update layout
+            targetPanel.repaint();     // Redraw component
 
-            // Ajouter le chemin à l'album
+            // Add the path to the album's data structure
             album.addImage(relativePath);
 
-            // Si c'est la première image, l'utiliser comme vignette
+            // If this is the first image, use it as album thumbnail
             if (album.getThumbnail() != null && album.getImagePaths().size() == 1) {
                 album.getThumbnail().setIcon((ImageIcon) imgLabel.getIcon());
             }
@@ -346,21 +368,22 @@ public class AlbumManager {
 
     /**
      * Deletes an image from its album.
-     *
+     * <p>
      * Removes the image from the UI and from the album's data structure.
      *
      * @param imageLabel The JLabel containing the image to delete
      */
     public void deleteImage(JLabel imageLabel) {
+        // Get the album panel this image belongs to
         JPanel albumPanel = (JPanel) imageLabel.getClientProperty("albumPanel");
         String resourcePath = (String) imageLabel.getClientProperty("resourcePath");
 
-        // Si le panel d'album n'est pas spécifié, utiliser le panel de la galerie
+        // If no album panel specified, use the gallery panel
         if (albumPanel == null) {
             albumPanel = galleryPanel;
         }
 
-        // Trouver l'album correspondant
+        // Find which album contains this panel
         Album album = null;
         for (Album a : albums.values()) {
             if (a.getPanel() == albumPanel) {
@@ -369,17 +392,18 @@ public class AlbumManager {
             }
         }
 
+        // If album not found, show error and exit
         if (album == null) {
             System.err.println("Could not find album for the image to delete");
             return;
         }
 
-        // Supprimer l'image du panel
+        // Remove the image from the UI
         albumPanel.remove(imageLabel);
-        albumPanel.revalidate();
-        albumPanel.repaint();
+        albumPanel.revalidate();  // Update layout
+        albumPanel.repaint();     // Redraw component
 
-        // Supprimer le chemin de l'image dans l'album
+        // Remove the image path from the album data
         album.removeImage(resourcePath);
     }
 
@@ -390,7 +414,7 @@ public class AlbumManager {
      * @param thumbnail The thumbnail label for the album
      */
     public void deleteAlbum(String albumName, JLabel thumbnail) {
-        // Empêcher la suppression de l'album par défaut
+        // Prevent deletion of the default album
         if (albumName.equals("default")) {
             JOptionPane.showMessageDialog(null,
                     "The main album cannot be deleted.",
@@ -399,7 +423,7 @@ public class AlbumManager {
             return;
         }
 
-        // Demander confirmation
+        // Ask for confirmation before deleting
         int confirm = JOptionPane.showConfirmDialog(null,
                 "Are you sure you want to delete the album '" + albumName + "' and all its images?",
                 "Confirm deletion",
@@ -407,37 +431,39 @@ public class AlbumManager {
                 JOptionPane.WARNING_MESSAGE);
 
         if (confirm == JOptionPane.YES_OPTION) {
-            // Récupérer l'album
+            // Retrieve the album
             Album album = albums.get(albumName);
-            if (album == null) return;
+            if (album == null) return;  // Album not found
 
-            // Trouver et supprimer la vue d'album
+            // Find and remove the album view from the UI
             Container parentContainer = thumbnail.getParent().getParent().getParent();
             if (parentContainer instanceof JPanel) {
                 JPanel mainPanel = (JPanel) parentContainer;
                 Component[] components = mainPanel.getComponents();
 
+                // Look for the album view component
                 for (Component comp : components) {
                     if (comp instanceof JPanel && comp.getName() != null
                             && comp.getName().equals("albumView_" + albumName)) {
-                        mainPanel.remove(comp);
+                        mainPanel.remove(comp);  // Remove it
                         break;
                     }
                 }
 
-                // Retourner à la vue principale
+                // Return to main view
                 CardLayout cardLayout = (CardLayout) mainPanel.getLayout();
                 cardLayout.show(mainPanel, "main");
             }
 
-            // Supprimer l'album des structures de données
+            // Remove album from data structures
             albums.remove(albumName);
 
-            // Supprimer la vignette de la barre d'albums
+            // Remove thumbnail from album bar
             albumBar.remove(thumbnail);
-            albumBar.revalidate();
-            albumBar.repaint();
+            albumBar.revalidate();  // Update layout
+            albumBar.repaint();     // Redraw component
 
+            // Show confirmation message
             JOptionPane.showMessageDialog(null,
                     "Album '" + albumName + "' deleted successfully!",
                     "Album Deleted",
@@ -447,39 +473,39 @@ public class AlbumManager {
 
     /**
      * Refreshes all albums with current data.
-     *
+     * <p>
      * Clears and rebuilds all album panels and thumbnails based on the
      * current album data. This ensures the UI reflects the current state
      * of the data model.
      */
     public void refreshAllAlbums() {
-        // Nettoyer les panels existants
+        // Clear existing panels
         for (Album album : albums.values()) {
             album.getPanel().removeAll();
         }
 
-        // Rafraîchir l'album bar
+        // Clear the album bar
         albumBar.removeAll();
 
-        // Recréer les vignettes et recharger les images
+        // Recreate thumbnails and reload images
         for (Map.Entry<String, Album> entry : albums.entrySet()) {
             String albumName = entry.getKey();
             Album album = entry.getValue();
 
-            // Remettre en place la vignette si nécessaire
+            // Recreate thumbnail if needed
             if (album.getThumbnail() == null && !albumName.equals("default")) {
                 JLabel thumbnail = createAlbumThumbnail(albumName, album.getPanel());
                 album.setThumbnail(thumbnail);
                 albumBar.add(thumbnail);
             }
 
-            // Charger les images dans le panel
+            // Load images into panel
             for (String path : album.getImagePaths()) {
                 JLabel imageLabel = imageManager.createImageLabel(path, album.getPanel());
                 if (imageLabel.getIcon() != null) {
                     album.getPanel().add(imageLabel);
 
-                    // Définir la vignette d'album si nécessaire
+                    // Set album thumbnail if needed
                     if (album.getThumbnail() != null && album.getThumbnail().getIcon() == null
                             && imageLabel.getIcon() instanceof ImageIcon) {
                         album.getThumbnail().setIcon((ImageIcon) imageLabel.getIcon());
@@ -487,10 +513,12 @@ public class AlbumManager {
                 }
             }
 
+            // Update the UI
             album.getPanel().revalidate();
             album.getPanel().repaint();
         }
 
+        // Update the album bar
         albumBar.revalidate();
         albumBar.repaint();
     }
@@ -503,11 +531,12 @@ public class AlbumManager {
     public Map<String, List<String>> getAlbumData() {
         Map<String, List<String>> result = new HashMap<>();
 
+        // For each album, collect its image paths
         for (Map.Entry<String, Album> entry : albums.entrySet()) {
             result.put(entry.getKey(), entry.getValue().getImagePaths());
         }
 
-        return result;
+        return result;  // Return map of album names to image path lists
     }
 
     /**
@@ -516,26 +545,27 @@ public class AlbumManager {
      * @param albumData A map of album names to lists of image paths
      */
     public void setAlbumData(Map<String, List<String>> albumData) {
-        // Créer ou mettre à jour les albums
+        // Create or update albums from the loaded data
         for (Map.Entry<String, List<String>> entry : albumData.entrySet()) {
             String albumName = entry.getKey();
             List<String> paths = entry.getValue();
 
+            // Get existing album or create new one
             Album album = albums.get(albumName);
 
             if (album == null) {
-                // Créer un nouveau panel pour l'album
+                // Create a new panel for the album
                 JPanel newPanel = new JPanel(new GridLayout(0, 2, 10, 10));
                 newPanel.setBackground(Color.WHITE);
 
-                // Créer l'album
+                // Create the album
                 album = new Album(albumName, newPanel);
                 albums.put(albumName, album);
 
-                // Ne pas créer de vignette ici, ce sera fait pendant le rafraîchissement
+                // Thumbnail will be created during refresh
             }
 
-            // Ajouter les chemins d'image à l'album
+            // Add image paths to the album
             for (String path : paths) {
                 album.addImage(path);
             }

@@ -23,25 +23,26 @@ import java.awt.event.*;
  * and updates the UI based on the results.
  */
 public class GalleryUI {
-    private PictureGalleryApp app;
-    private AlbumManager albumManager;
-    private ImageManager imageManager;
+    // References to other components
+    private PictureGalleryApp app;           // Main application
+    private AlbumManager albumManager;       // Album management
+    private ImageManager imageManager;       // Image processing
 
-    // Composants UI principaux
-    private JPanel mainPanel;
-    private CardLayout cardLayout;
-    private JPanel galleryPanel;
-    private JPanel fullViewPanel;
-    private JLabel fullImageLabel;
-    private JPanel albumBar;
-    private JPanel fullControls;
-    private JComboBox<String> filterComboBox;
+    // Main UI components
+    private JPanel mainPanel;                // Contains all views
+    private CardLayout cardLayout;           // For switching between views
+    private JPanel galleryPanel;             // Shows images grid
+    private JPanel fullViewPanel;            // Shows single image large
+    private JLabel fullImageLabel;           // Displays full-size image
+    private JPanel albumBar;                 // Shows album thumbnails
+    private JPanel fullControls;             // Controls for full view
+    private JComboBox<String> filterComboBox;// Filter selection dropdown
 
 
     public GalleryUI(PictureGalleryApp app, AlbumManager albumManager, ImageManager imageManager) {
-        this.app = app;
-        this.albumManager = albumManager;
-        this.imageManager = imageManager;
+        this.app = app;                  // Store reference to main app
+        this.albumManager = albumManager;// Store reference to album manager
+        this.imageManager = imageManager;// Store reference to image manager
     }
 
     /**
@@ -53,22 +54,22 @@ public class GalleryUI {
      * @return A JPanel containing the complete gallery UI
      */
     public JPanel createMainInterface() {
-        // Initialiser le layout et le panel principal
+        // Initialize the layout and main panel
         cardLayout = new CardLayout();
         mainPanel = new JPanel(cardLayout);
 
-        // Créer les différentes vues
-        JPanel mainView = createMainView();
-        fullViewPanel = createFullScreenView();
+        // Create the different views
+        JPanel mainView = createMainView();         // Main gallery grid
+        fullViewPanel = createFullScreenView();     // Full-screen image view
 
-        // Ajouter les vues au panel principal
-        mainPanel.add(mainView, "main");
-        mainPanel.add(fullViewPanel, "full");
+        // Add views to the main panel
+        mainPanel.add(mainView, "main");            // "main" is the card name
+        mainPanel.add(fullViewPanel, "full");       // "full" is the card name
 
-        // Afficher la vue principale par défaut
+        // Show the main view by default
         cardLayout.show(mainPanel, "main");
 
-        return mainPanel;
+        return mainPanel;  // Return the complete interface
     }
 
     /**
@@ -82,52 +83,57 @@ public class GalleryUI {
      * @return The main gallery view panel
      */
     private JPanel createMainView() {
+        // Create main container with BorderLayout
         JPanel mainView = new JPanel(new BorderLayout());
         mainView.setBackground(Color.WHITE);
 
-        // Barre d'outils supérieure avec boutons d'action
+        // Create top toolbar with buttons
         JPanel topBar = new JPanel(new BorderLayout());
         topBar.setBackground(Color.WHITE);
 
-        JButton addBtn = new JButton("Add");
-        JButton albumBtn = new JButton("Albums");
+        // Create action buttons
+        JButton addBtn = new JButton("Add");        // For adding images
+        JButton albumBtn = new JButton("Albums");   // For managing albums
 
+        // Arrange buttons in left panel
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         buttonPanel.setBackground(Color.WHITE);
         buttonPanel.add(addBtn);
 
+        // Add buttons to top bar
         topBar.add(buttonPanel, BorderLayout.WEST);
         topBar.add(albumBtn, BorderLayout.EAST);
         mainView.add(topBar, BorderLayout.NORTH);
 
-        // Panel central avec la grille d'images
+        // Create center panel with image grid (2 columns, 10px spacing)
         galleryPanel = new JPanel(new GridLayout(0, 2, 10, 10));
         galleryPanel.setBackground(Color.WHITE);
-        JScrollPane scrollPane = new JScrollPane(galleryPanel);
+        JScrollPane scrollPane = new JScrollPane(galleryPanel);  // Make scrollable
         mainView.add(scrollPane, BorderLayout.CENTER);
 
-        // Barre d'albums en bas
+        // Create album thumbnails bar at bottom
         albumBar = new JPanel();
         albumBar.setLayout(new FlowLayout(FlowLayout.LEFT, 20, 10));
         albumBar.setBackground(Color.LIGHT_GRAY);
 
+        // Make album bar scrollable horizontally
         JScrollPane albumScrollPane = new JScrollPane(
                 albumBar,
-                JScrollPane.VERTICAL_SCROLLBAR_NEVER,
-                JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED
+                JScrollPane.VERTICAL_SCROLLBAR_NEVER,      // No vertical scrollbar
+                JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED // Horizontal scrollbar when needed
         );
         albumScrollPane.setPreferredSize(new Dimension(0, 160));
-        albumScrollPane.setBorder(null);
+        albumScrollPane.setBorder(null);  // Remove border
         mainView.add(albumScrollPane, BorderLayout.SOUTH);
 
-        // Enregistrer les panneaux dans le gestionnaire d'albums
+        // Register panels with album manager
         albumManager.registerPanels(galleryPanel, albumBar);
 
-        // Ajouter les écouteurs d'événement
-        addBtn.addActionListener(e -> showAddImageDialog());
-        albumBtn.addActionListener(e -> showAlbumChooser());
+        // Add event listeners
+        addBtn.addActionListener(e -> showAddImageDialog());     // Show add image dialog
+        albumBtn.addActionListener(e -> showAlbumChooser());     // Show album dialog
 
-        return mainView;
+        return mainView;  // Return the complete main view
     }
 
     /**
@@ -141,46 +147,50 @@ public class GalleryUI {
      * @return The full screen view panel
      */
     private JPanel createFullScreenView() {
+        // Create main container with BorderLayout
         JPanel fullView = new JPanel(new BorderLayout());
         fullView.setBackground(Color.WHITE);
 
-        // Étiquette pour l'image en plein écran
+        // Create label for displaying the full-size image
         fullImageLabel = new JLabel("", SwingConstants.CENTER);
         fullView.add(fullImageLabel, BorderLayout.CENTER);
 
-        // Barre supérieure avec bouton de retour
+        // Create top bar with back button
         JPanel fullTopBar = new JPanel(new FlowLayout(FlowLayout.LEFT));
         fullTopBar.setBackground(Color.WHITE);
         JButton backBtn = new JButton("Back");
-        backBtn.addActionListener(e -> cardLayout.show(mainPanel, "main"));
+        backBtn.addActionListener(e -> cardLayout.show(mainPanel, "main"));  // Return to main view
         fullTopBar.add(backBtn);
         fullView.add(fullTopBar, BorderLayout.NORTH);
 
-        // Contrôles en bas pour manipuler l'image
+        // Create bottom controls panel
         fullControls = new JPanel();
         fullControls.setBackground(Color.WHITE);
 
-        JButton resizeBtn = new JButton("Resize");
-        JButton deleteBtn = new JButton("Delete");
+        // Add control buttons
+        JButton resizeBtn = new JButton("Resize");    // For resizing images
+        JButton deleteBtn = new JButton("Delete");    // For deleting images
 
+        // Create filter dropdown
         String[] filters = {"None", "Grayscale", "Sepia", "Invert"};
         filterComboBox = new JComboBox<>(filters);
 
+        // Add controls to panel
         fullControls.add(resizeBtn);
         fullControls.add(deleteBtn);
         fullControls.add(filterComboBox);
 
         fullView.add(fullControls, BorderLayout.SOUTH);
 
-        // Actions des boutons
-        deleteBtn.addActionListener(e -> deleteCurrentImage());
-        resizeBtn.addActionListener(e -> showResizeDialog());
-        filterComboBox.addActionListener(e -> applySelectedFilter());
+        // Set up button actions
+        deleteBtn.addActionListener(e -> deleteCurrentImage());    // Delete current image
+        resizeBtn.addActionListener(e -> showResizeDialog());      // Show resize dialog
+        filterComboBox.addActionListener(e -> applySelectedFilter()); // Apply selected filter
 
-        // Enregistrer les composants dans le gestionnaire d'images
+        // Register components with image manager
         imageManager.registerFullScreenComponents(fullImageLabel, filterComboBox);
 
-        return fullView;
+        return fullView;  // Return the complete full-screen view
     }
 
     /**
@@ -191,8 +201,10 @@ public class GalleryUI {
      * the current album.
      */
     private void showAddImageDialog() {
+        // Get list of available images
         String[] imagePaths = imageManager.getImageResourcePaths();
 
+        // Check if any images are available
         if (imagePaths.length == 0) {
             JOptionPane.showMessageDialog(null,
                     "No images found in /resources/imageGallery",
@@ -201,19 +213,21 @@ public class GalleryUI {
             return;
         }
 
+        // Show image selection dialog
         String selected = (String) JOptionPane.showInputDialog(null,
                 "Select an image:",
                 "Add Image",
                 JOptionPane.PLAIN_MESSAGE,
                 null,
                 imagePaths,
-                imagePaths[0]);
+                imagePaths[0]);  // First image is default selection
 
+        // Process selection if user didn't cancel
         if (selected != null) {
-            // Compresser et ajouter l'image à l'album actuel
+            // Compress and add image to current album
             albumManager.addImageToAlbum(app.getCurrentAlbum(), selected);
 
-            // Retourner à la vue principale et sauvegarder
+            // Return to main view and save gallery state
             cardLayout.show(mainPanel, "main");
             app.saveGallery();
         }
@@ -226,12 +240,15 @@ public class GalleryUI {
      * The gallery state is saved after creating a new album.
      */
     private void showAlbumChooser() {
+        // Prompt for album name
         String name = JOptionPane.showInputDialog("Name of album to create/select:");
 
+        // Process if user entered a name
         if (name != null && !name.trim().isEmpty()) {
+            // Try to create album (returns false if already exists)
             boolean created = albumManager.createAlbumIfNotExists(name);
             if (created) {
-                app.saveGallery();
+                app.saveGallery();  // Save changes if new album created
             }
         }
     }
@@ -243,24 +260,27 @@ public class GalleryUI {
      * its album and updates the UI accordingly.
      */
     private void deleteCurrentImage() {
+        // Get the original label for the image
         JLabel origin = (JLabel) fullImageLabel.getClientProperty("originLabel");
         if (origin != null) {
+            // Ask for confirmation
             int confirm = JOptionPane.showConfirmDialog(null,
                     "Are you sure you want to delete this image?",
                     "Confirm Deletion",
                     JOptionPane.YES_NO_OPTION);
 
             if (confirm == JOptionPane.YES_OPTION) {
+                // Delete the image from its album
                 albumManager.deleteImage(origin);
 
-                // Nettoyer la vue en plein écran
+                // Clear the full-screen view
                 fullImageLabel.setIcon(null);
                 fullImageLabel.putClientProperty("originLabel", null);
 
-                // Sauvegarder les changements
+                // Save changes
                 app.saveGallery();
 
-                // Retourner à la vue principale
+                // Return to main view
                 cardLayout.show(mainPanel, "main");
             }
         }
@@ -273,19 +293,25 @@ public class GalleryUI {
      * and resizes the image accordingly.
      */
     private void showResizeDialog() {
+        // Prompt for new dimensions
         String input = JOptionPane.showInputDialog("New size (e.g. 150x150):");
 
+        // Check if input matches expected format
         if (input != null && input.matches("\\d+x\\d+")) {
+            // Parse width and height
             String[] parts = input.split("x");
             int width = Integer.parseInt(parts[0]);
             int height = Integer.parseInt(parts[1]);
 
+            // Get original image label
             JLabel origin = (JLabel) fullImageLabel.getClientProperty("originLabel");
             if (origin != null) {
+                // Resize the image
                 imageManager.resizeImage(origin, fullImageLabel, width, height);
-                app.saveGallery();
+                app.saveGallery();  // Save changes
             }
         } else if (input != null) {
+            // Show error for invalid format
             JOptionPane.showMessageDialog(null,
                     "Invalid format. Use widthxheight");
         }
@@ -298,11 +324,15 @@ public class GalleryUI {
      * the image using the ImageManager.
      */
     private void applySelectedFilter() {
+        // Get original image label
         JLabel origin = (JLabel) fullImageLabel.getClientProperty("originLabel");
         if (origin != null) {
+            // Get selected filter from dropdown
             String filterName = (String) filterComboBox.getSelectedItem();
+
+            // Apply the filter
             imageManager.applyFilter(origin, fullImageLabel, filterName);
-            app.saveGallery();
+            app.saveGallery();  // Save changes
         }
     }
 
@@ -313,7 +343,7 @@ public class GalleryUI {
      * the current state of the data model.
      */
     public void refreshGalleryFromData() {
-        albumManager.refreshAllAlbums();
+        albumManager.refreshAllAlbums();  // Refresh all albums from data
     }
 
     /**
@@ -322,6 +352,6 @@ public class GalleryUI {
      * @param viewName The name of the view to display
      */
     public void showView(String viewName) {
-        cardLayout.show(mainPanel, viewName);
+        cardLayout.show(mainPanel, viewName);  // Show the specified card
     }
 }

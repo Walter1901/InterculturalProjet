@@ -13,10 +13,10 @@ import java.util.List;
  * methods for adding, removing, and checking for images.
  */
 public class Album {
-    private String name;
-    private JPanel panel;
-    private JLabel thumbnail;
-    private List<String> imagePaths;
+    private String name;          // Name of the album
+    private JPanel panel;         // Panel where images are displayed
+    private JLabel thumbnail;     // Thumbnail representation in UI
+    private List<String> imagePaths; // Paths to images in the album
 
     /**
      * Creates a new album with the specified name and panel.
@@ -25,9 +25,9 @@ public class Album {
      * @param panel The panel that will display the album's images
      */
     public Album(String name, JPanel panel) {
-        this.name = name;
-        this.panel = panel;
-        this.imagePaths = new ArrayList<>();
+        this.name = name;                      // Store album name
+        this.panel = panel;                    // Store display panel
+        this.imagePaths = new ArrayList<>();   // Initialize empty path list
     }
 
     /**
@@ -39,6 +39,7 @@ public class Album {
      * @param path Path to the image resource
      */
     public void addImage(String path) {
+        // Add image path if not already in album
         if (!imagePaths.contains(path)) {
             imagePaths.add(path);
         }
@@ -53,6 +54,7 @@ public class Album {
      * @return true if the image was found and removed, false otherwise
      */
     public boolean removeImage(String path) {
+        // Remove the path and return true if found
         return imagePaths.remove(path);
     }
 
@@ -63,6 +65,7 @@ public class Album {
      * @return true if the album contains the image, false otherwise
      */
     public boolean containsImage(String path) {
+        // Return true if path is in the list
         return imagePaths.contains(path);
     }
 
@@ -72,7 +75,7 @@ public class Album {
      * @return The album name
      */
     public String getName() {
-        return name;
+        return name;  // Return album name
     }
 
     /**
@@ -81,7 +84,7 @@ public class Album {
      * @return The album's JPanel
      */
     public JPanel getPanel() {
-        return panel;
+        return panel;  // Return display panel
     }
 
     /**
@@ -90,7 +93,7 @@ public class Album {
      * @return A list of image paths
      */
     public List<String> getImagePaths() {
-        return new ArrayList<>(imagePaths); // Copie défensive
+        return new ArrayList<>(imagePaths);  // Return defensive copy
     }
 
     /**
@@ -99,7 +102,7 @@ public class Album {
      * @return The JLabel used as the album's thumbnail
      */
     public JLabel getThumbnail() {
-        return thumbnail;
+        return thumbnail;  // Return thumbnail label
     }
 
     /**
@@ -108,6 +111,6 @@ public class Album {
      * @param thumbnail The JLabel to use as the album's thumbnail
      */
     public void setThumbnail(JLabel thumbnail) {
-        this.thumbnail = thumbnail;
+        this.thumbnail = thumbnail;  // Store thumbnail label
     }
 }

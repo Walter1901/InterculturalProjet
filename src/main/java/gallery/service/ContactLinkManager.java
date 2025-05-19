@@ -19,8 +19,8 @@ import java.util.Map;
  * - Removing links between images and contacts
  */
 public class ContactLinkManager {
-    // Structure de données pour stocker les liens
-    private Map<String, List<String>> contactImageLinks = new HashMap<>();
+    // Data structure to store image-contact relationships
+    private Map<String, List<String>> contactImageLinks = new HashMap<>();  // Maps contact IDs to lists of image paths
 
     /**
      * Links an image to a contact.
@@ -33,10 +33,12 @@ public class ContactLinkManager {
      * @param imagePath Path to the image resource
      */
     public void linkImageToContact(String contactId, String imagePath) {
+        // If this contact doesn't have a list yet, create one
         if (!contactImageLinks.containsKey(contactId)) {
             contactImageLinks.put(contactId, new ArrayList<>());
         }
 
+        // Add the image to the contact's list if not already there
         if (!contactImageLinks.get(contactId).contains(imagePath)) {
             contactImageLinks.get(contactId).add(imagePath);
         }
@@ -52,6 +54,7 @@ public class ContactLinkManager {
      * @return List of image paths linked to the contact
      */
     public List<String> getImagesForContact(String contactId) {
+        // Return the list of images for this contact or an empty list if none exists
         return contactImageLinks.getOrDefault(contactId, new ArrayList<>());
     }
 
@@ -62,6 +65,7 @@ public class ContactLinkManager {
      * @param imagePath Path to the image resource
      */
     public void unlinkImageFromContact(String contactId, String imagePath) {
+        // If contact exists, remove the image from their list
         if (contactImageLinks.containsKey(contactId)) {
             contactImageLinks.get(contactId).remove(imagePath);
         }
@@ -76,12 +80,13 @@ public class ContactLinkManager {
     public List<String> getContactsForImage(String imagePath) {
         List<String> contacts = new ArrayList<>();
 
+        // Search through all contacts to find those that have this image
         for (Map.Entry<String, List<String>> entry : contactImageLinks.entrySet()) {
             if (entry.getValue().contains(imagePath)) {
-                contacts.add(entry.getKey());
+                contacts.add(entry.getKey());  // Add contact ID to results
             }
         }
 
-        return contacts;
+        return contacts;  // Return list of contact IDs
     }
 }
