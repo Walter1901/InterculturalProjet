@@ -1,3 +1,5 @@
+import gallery.service.TinyPNGService;
+
 import javax.swing.*;
 import java.awt.*;
 import java.io.BufferedReader;

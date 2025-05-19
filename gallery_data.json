@@ -1,24 +1,29 @@
 {
   "albumData": {
-    "default": [
-      "/imageGallery/SEAT_LEON.jpg",
-      "/imageGallery/Walter1.jpeg",
-      "/imageGallery/Walter1.jpeg",
-      "/imageGallery/Walter2.jpeg",
-      "/imageGallery/Walter2.jpeg"
-    ],
-    "SEAT": [
-      "/imageGallery/SEAT_LEON.jpg"
-    ],
     "Walter": [
       "/imageGallery/Walter1.jpeg",
       "/imageGallery/Walter2.jpeg",
       "/imageGallery/SEAT_LEON_7.jpg",
       "/imageGallery/SEAT_LEON.jpg"
+    ],
+    "Cars": [
+      "/imageGallery/SEAT_LEON_3.jpg"
+    ],
+    "default": [
+      "/imageGallery/SEAT_LEON.jpg",
+      "/imageGallery/Walter1.jpeg",
+      "/imageGallery/Walter2.jpeg",
+      "/imageGallery/SEAT_LEON_3.jpg",
+      "/imageGallery/SEAT_LEON_7.jpg"
+    ],
+    "SEAT": [
+      "/imageGallery/SEAT_LEON.jpg"
+    ],
+    "hello": [
+      "/imageGallery/SEAT_LEON_7.jpg"
     ]
   },
   "imageFilters": {
-    "/imageGallery/SEAT_LEON.jpg": "Grayscale",
-    "/imageGallery/Walter2.jpeg": "None"
+    "/imageGallery/SEAT_LEON.jpg": "None"
   }
 }
