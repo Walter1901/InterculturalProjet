@@ -10,6 +10,7 @@ public class Homescreen extends phoneUtils {
      * and display the phone's user interface.
      */
     public static void main(String[] args) {
-        createHomescreen(); // Creates and displays the phone interface
+        // Creates and displays the phone interface
+        createHomescreen();
     }
 }

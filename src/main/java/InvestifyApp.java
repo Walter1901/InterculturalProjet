@@ -40,7 +40,7 @@ public class InvestifyApp {
     /**
      * Conversion rate from USD to Swiss Franc.
      */
-    public static final double USD_TO_CHF = 0.89;
+    public final double USD_TO_CHF = 0.89;
 
 
     /**
@@ -436,7 +436,7 @@ public class InvestifyApp {
      * @param resourcePath Path to the icon image resource
      * @return A configured JButton with the specified icon
      */
-    private static JButton createNavButton(String resourcePath) {
+    private JButton createNavButton(String resourcePath) {
         // Load the icon from the specified resource path
         java.net.URL iconURL = InvestifyApp.class.getResource(resourcePath);
         if (iconURL == null) {
@@ -466,7 +466,7 @@ public class InvestifyApp {
      * @param parentPanel The parent panel containing all screens
      * @return A JPanel containing the navigation bar
      */
-    private static JPanel createNavBar(CardLayout layout, JPanel parentPanel) {
+    private JPanel createNavBar(CardLayout layout, JPanel parentPanel) {
         // Create a navigation bar with 5 equal columns
         JPanel navBar = new JPanel(new GridLayout(1, 5));
         navBar.setBackground(phoneUtils.backgroundColor);
@@ -575,7 +575,7 @@ public class InvestifyApp {
      * Displays stocks, quantities, and values for all user holdings.
      * @return A JPanel containing the portfolio information
      */
-    private static JPanel createPortfolioContent() {
+    private JPanel createPortfolioContent() {
         // Create the main content panel
         JPanel content = new JPanel(new BorderLayout());
         content.setBackground(phoneUtils.backgroundColor);
@@ -710,7 +710,7 @@ public class InvestifyApp {
      * @param action "Buy" or "Sell" to indicate transaction type
      * @param parentPanel The parent panel containing the search components
      */
-    private static void openTransactionDialog(String action, JPanel parentPanel) {
+    private void openTransactionDialog(String action, JPanel parentPanel) {
         // Find the search field and retrieve the current stock symbol
         JTextField searchBar = null;
         double currentPrice = 0.0;
@@ -853,7 +853,7 @@ public class InvestifyApp {
      * Calculates the total portfolio value and updates the portfolioValue variable.
      * @return A JPanel containing the portfolio pie chart
      */
-    private static JPanel createPieChartPanel() {
+    private JPanel createPieChartPanel() {
         // Create main panel for the chart
         JPanel chartPanel = new JPanel(new BorderLayout());
         chartPanel.setBackground(phoneUtils.backgroundColor);
@@ -999,7 +999,7 @@ public class InvestifyApp {
         int result = JOptionPane.showConfirmDialog(
                 null,
                 panel,
-                "Configuration API Investify",
+                "Investify API Configuration",
                 JOptionPane.OK_CANCEL_OPTION,
                 JOptionPane.PLAIN_MESSAGE);
 
@@ -1021,7 +1021,7 @@ public class InvestifyApp {
      * @param amount The monetary amount in USD to format
      * @return A formatted string with the appropriate currency symbol
      */
-    public static String formatCurrency(double amount) {
+    public String formatCurrency(double amount) {
         // Convert to CHF if selected
         if (currentCurrency.equals("CHF")) {
             amount = amount * USD_TO_CHF;
