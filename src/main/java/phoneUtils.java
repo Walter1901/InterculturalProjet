@@ -257,7 +257,6 @@ public class phoneUtils {
         mainPanel.add(homeScreen, "Home");
 
         // Add individual application screens
-
         // Investify application
         InvestifyApp investify = new InvestifyApp();
         JPanel investifyScreen = investify.createInvestify();
@@ -273,7 +272,8 @@ public class phoneUtils {
         mainPanel.add(pictureGalleryScreen, "Picture Gallery");
 
         // Finance Tracker application
-        JPanel financeTrackerScreen = FinanceTracker.createFinanceTracker();
+        FinanceTracker financeTracker = new FinanceTracker();
+        JPanel financeTrackerScreen = financeTracker.createFinanceTracker();
         mainPanel.add(financeTrackerScreen, "Finance Tracker");
 
         // Add the main panel and navigation bars to the phone frame
