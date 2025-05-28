@@ -5,15 +5,18 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.ArrayList;
+
 import Finance.model.Goal;
 import Finance.data.GoalStorage;
 
+// Panel class for displaying and managing saving goals
 public class SavingGoalsPanel {
     // list of all saving goals
     private final List<Goal> goals;
 
     // used to load and save goals to storage
-    private final GoalStorage storage = new GoalStorage();
+    private GoalStorage storage = new GoalStorage();
 
     // main panel that holds everything
     private JPanel mainPanel;
@@ -24,33 +27,54 @@ public class SavingGoalsPanel {
     private final Color PRIMARY_COLOR = new Color(0, 122, 255);
     private final Font GOAL_FONT = new Font("Inter", Font.BOLD, 16);
     private final Font DETAIL_FONT = new Font("Inter", Font.PLAIN, 14);
-    private final Dimension HEADER_SIZE = new Dimension(400, 40);
-    private final int MIN_CARD_WIDTH = 250;
+    private final int MIN_CARD_WIDTH = 200;
     private final int CARD_HEIGHT = 150;
 
     // scroll pane for goal cards
     private JScrollPane scrollPane;
 
+    // Constructor initializes the panel and loads saved goals
     public SavingGoalsPanel() {
-        this.goals = storage.loadGoals(); // Load goals from storage
+        this.storage = new GoalStorage();
+        List<Goal> loadedGoals = storage.loadGoals();
+        this.goals = new ArrayList<>(loadedGoals != null ? loadedGoals : new ArrayList<>());
         initializeUI();
+        refreshGoalsList(); // displays all goals
     }
 
+    // Returns the main panel containing all UI components
     public JPanel createSavingGoalsPanel() {
+        // ensures saved data is loaded and UI is up to date
+        refreshGoalsList();
         return mainPanel;
     }
 
+    // Initializes the user interface components
     private void initializeUI() {
         mainPanel = new JPanel();
         mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
         mainPanel.setBackground(BACKGROUND_COLOR);
         mainPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
 
+        // Create header
         createHeader();
+
+        // Create initial scroll pane
         scrollPane = createGoalsList();
         mainPanel.add(scrollPane);
     }
 
+    // Refreshes the list of goals in the UI
+    private void refreshGoalsList() {
+        mainPanel.removeAll();
+        createHeader();
+        scrollPane = createGoalsList();
+        mainPanel.add(scrollPane);
+        mainPanel.revalidate();
+        mainPanel.repaint();
+    }
+
+    // Creates the header panel with title and add button
     private void createHeader() {
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setBackground(BACKGROUND_COLOR);
@@ -67,15 +91,15 @@ public class SavingGoalsPanel {
         mainPanel.add(headerPanel);
     }
 
-    // builds the list of goals with scroll support
+    // Creates a scrollable list of goal cards
     private JScrollPane createGoalsList() {
         JPanel cardsPanel = new JPanel();
         cardsPanel.setLayout(new BoxLayout(cardsPanel, BoxLayout.Y_AXIS));
         cardsPanel.setBackground(BACKGROUND_COLOR);
 
-        // Entfernen Sie die feste Breite und lassen Sie die Karten die volle Breite nutzen
-        Dimension cardSize = new Dimension(mainPanel.getWidth() - 30, CARD_HEIGHT); // -30 für Scrollbar-Puffer
+        Dimension cardSize = new Dimension(300, CARD_HEIGHT); // Fixed width as minimum
 
+        // Show empty state if no goals exist
         if (goals.isEmpty()) {
             JLabel emptyLabel = new JLabel("No saving goals yet.");
             emptyLabel.setFont(DETAIL_FONT);
@@ -85,6 +109,7 @@ public class SavingGoalsPanel {
             cardsPanel.add(emptyLabel);
             cardsPanel.add(Box.createVerticalGlue());
         } else {
+            // Create a card for each goal
             for (Goal goal : goals) {
                 JPanel card = createGoalCard(goal, cardSize);
                 cardsPanel.add(card);
@@ -97,12 +122,12 @@ public class SavingGoalsPanel {
         scroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         scroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scroll.getVerticalScrollBar().setUnitIncrement(16);
-        scroll.setPreferredSize(new Dimension(mainPanel.getWidth(), 450)); // Nutzt die volle Breite
+        scroll.setPreferredSize(new Dimension(mainPanel.getWidth(), 450));
 
         return scroll;
     }
 
-    // makes a single goal card UI with all its info
+    // Creates a single goal card UI component
     private JPanel createGoalCard(Goal goal, Dimension size) {
         JPanel card = new JPanel();
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
@@ -115,38 +140,44 @@ public class SavingGoalsPanel {
         card.setMaximumSize(size);
         card.setMinimumSize(new Dimension(MIN_CARD_WIDTH, CARD_HEIGHT));
 
-        // show goal name at the top
+        // Goal name label
         JLabel nameLabel = new JLabel(goal.getName());
         nameLabel.setFont(GOAL_FONT);
         nameLabel.setBorder(new EmptyBorder(0, 0, 10, 0));
         card.add(nameLabel);
 
-        // show date range if available
+        // Add date range if available
         if (goal.getStartDate() != null && goal.getEndDate() != null) {
             addDateLabel(card, goal);
         }
 
-        // show progress bar
+        // Add progress bar
         addProgressBar(card, goal);
 
-        // show amount info
+        // Add amount information
         addAmountLabel(card, goal);
 
-        // button to add money to this goal
+        // Button to add money to this goal
         JButton addAmountButton = new JButton("Add Amount");
         addAmountButton.setFont(new Font("Inter", Font.PLAIN, 12));
         addAmountButton.addActionListener(e -> {
-            showAddAmountDialog(goal); // open dialog
-            refreshGoalsList();        // update the list visually
-            storage.saveGoals(goals); // save to file
+            showAddAmountDialog(goal);
+            refreshGoalsList();
+            storage.saveGoals(goals);
         });
 
-        // button to delete this goal
-        JButton deleteButton = new JButton("🗑");
-        deleteButton.setFont(new Font("Inter", Font.PLAIN, 12));
-        deleteButton.setForeground(Color.RED);
+        // Delete button setup
+        JButton deleteButton = new JButton("Delete");
+        deleteButton.setFont(new Font("Inter", Font.BOLD, 12));
+        deleteButton.setBackground(new Color(220, 53, 69));
+        deleteButton.setForeground(Color.WHITE);
+        deleteButton.setFocusPainted(false);
+        deleteButton.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(220, 53, 69).darker()),
+                new EmptyBorder(4, 10, 4, 10)));
+        deleteButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
-        // Aktion beim Klick: Ziel entfernen
+        // Action when clicked: remove goal
         deleteButton.addActionListener(e -> {
             int confirm = JOptionPane.showConfirmDialog(
                     null,
@@ -161,7 +192,7 @@ public class SavingGoalsPanel {
             }
         });
 
-        // put the buttons on the right side
+        // Button container panel
         JPanel buttonWrapper = new JPanel();
         buttonWrapper.setLayout(new BoxLayout(buttonWrapper, BoxLayout.X_AXIS));
         buttonWrapper.setBackground(CARD_COLOR);
@@ -169,17 +200,16 @@ public class SavingGoalsPanel {
 
         buttonWrapper.add(Box.createHorizontalGlue());
         buttonWrapper.add(addAmountButton);
-        buttonWrapper.add(Box.createRigidArea(new Dimension(10, 0))); // Abstand
+        buttonWrapper.add(Box.createRigidArea(new Dimension(10, 0)));
         buttonWrapper.add(deleteButton);
 
         card.add(Box.createRigidArea(new Dimension(0, 10)));
         card.add(buttonWrapper);
 
-
         return card;
     }
 
-    // adds a label showing the goal's start and end dates
+    // Adds a date range label to the goal card
     private void addDateLabel(JPanel card, Goal goal) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
         String dateRange = formatter.format(goal.getStartDate()) + " - " +
@@ -191,7 +221,7 @@ public class SavingGoalsPanel {
         card.add(dateLabel);
     }
 
-    // adds a progress bar based on how much of the goal is reached
+    // Adds a progress bar showing goal completion percentage
     private void addProgressBar(JPanel card, Goal goal) {
         int percentage = (int) ((goal.getCurrentAmount() / goal.getTargetAmount()) * 100);
 
@@ -225,7 +255,7 @@ public class SavingGoalsPanel {
         card.add(progressPanel);
     }
 
-    // shows the saved amount compared to the target
+    // Adds a label showing current vs target amount
     private void addAmountLabel(JPanel card, Goal goal) {
         JLabel amountLabel = new JLabel(String.format("CHF %,.0f / %,.0f",
                 goal.getCurrentAmount(),
@@ -235,7 +265,7 @@ public class SavingGoalsPanel {
         card.add(amountLabel);
     }
 
-    // creates a blue styled "New Goal" button
+    // Creates a styled button for adding new goals
     private JButton createStyledButton() {
         JButton button = new JButton("New Goal");
         button.setBackground(PRIMARY_COLOR);
@@ -247,7 +277,7 @@ public class SavingGoalsPanel {
         return button;
     }
 
-    // opens a dialog to let the user add a new saving goal
+    // Shows dialog for adding a new saving goal
     private void showAddGoalDialog() {
         JPanel panel = new JPanel(new GridLayout(0, 1));
 
@@ -277,7 +307,7 @@ public class SavingGoalsPanel {
         }
     }
 
-    // lets user add money to a goal
+    // Shows dialog for adding money to a goal
     private void showAddAmountDialog(Goal goal) {
         String input = JOptionPane.showInputDialog(
                 null,
@@ -301,14 +331,5 @@ public class SavingGoalsPanel {
                         JOptionPane.ERROR_MESSAGE);
             }
         }
-    }
-
-    // refreshes the scrollable list after changes
-    private void refreshGoalsList() {
-        mainPanel.remove(scrollPane); // remove old scroll pane
-        scrollPane = createGoalsList(); // recreate with updated data
-        mainPanel.add(scrollPane); // add it again
-        mainPanel.revalidate();
-        mainPanel.repaint();
     }
 }

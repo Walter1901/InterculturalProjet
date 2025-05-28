@@ -1,5 +1,7 @@
 package Address.models;
 
+import Address.GalleryFrame;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -87,7 +89,7 @@ public class AddContactDialog extends JDialog {
         add(buttonPanel, BorderLayout.SOUTH);
 
         // Setup button actions
-        selectPhotoBtn.addActionListener(e -> selectPhoto());
+        selectPhotoBtn.addActionListener(e ->   selectPhoto());
         saveButton.addActionListener(e -> saveContact());
         cancelButton.addActionListener(e -> dispose());
     }
@@ -125,13 +127,37 @@ public class AddContactDialog extends JDialog {
     }
 
     private void selectPhoto() {
-        GalleryFrame gallery = new GalleryFrame();
-        gallery.addImageSelectedListener(image -> {
-            selectedPhoto = image;
-            photoLabel.setIcon(new ImageIcon(image.getImage().getScaledInstance(80, 80, Image.SCALE_SMOOTH)));
-            photoLabel.setText("");
-        });
-        gallery.setVisible(true);
+
+        // Créer un dialogue de sélection de fichier pour choisir une photo
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Select Profile Photo");
+        fileChooser.setAcceptAllFileFilterUsed(false);
+
+        // Ajouter un filtre pour les images
+        javax.swing.filechooser.FileNameExtensionFilter filter =
+                new javax.swing.filechooser.FileNameExtensionFilter(
+                        "Image files", "jpg", "jpeg", "png", "gif", "bmp");
+        fileChooser.addChoosableFileFilter(filter);
+
+        int result = fileChooser.showOpenDialog(this);
+
+        if (result == JFileChooser.APPROVE_OPTION) {
+            try {
+                java.io.File selectedFile = fileChooser.getSelectedFile();
+                selectedPhoto = new ImageIcon(selectedFile.getAbsolutePath());
+
+                // Redimensionner l'image pour l'affichage dans le label
+                Image image = selectedPhoto.getImage().getScaledInstance(80, 80, Image.SCALE_SMOOTH);
+                photoLabel.setIcon(new ImageIcon(image));
+                photoLabel.setText("");
+
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(this,
+                        "Error loading image: " + e.getMessage(),
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        }
     }
 
     private void saveContact() {

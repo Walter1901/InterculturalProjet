@@ -78,51 +78,45 @@ public class ImageManager {
     }
 
     /**
-     * Creates a JLabel containing an image.
+     * Creates a JLabel containing an image from either resources or external path.
+     * Handles both embedded resource paths and absolute file paths for external images.
      *
-     * Loads the image from the specified resource path, creates a thumbnail,
-     * and configures the label for interaction and drag-and-drop. The original
-     * image is stored for filter operations.
-     *
-     * @param resourcePath Path to the image resource
+     * @param resourcePath Path to the image resource or absolute file path
      * @param albumPanel Panel that will contain the image
      * @return A JLabel containing the image thumbnail
      */
     public JLabel createImageLabel(String resourcePath, JPanel albumPanel) {
-        // Create a new label for the image
         JLabel label = new JLabel();
-        label.setHorizontalAlignment(SwingConstants.CENTER);  // Center the image in the label
+        label.setHorizontalAlignment(SwingConstants.CENTER);
 
         try {
-            // Try to load the image from the resources
-            URL imageUrl = getClass().getResource(resourcePath);
-            if (imageUrl != null) {
-                // If found, read the image
-                Image image = ImageIO.read(imageUrl);
-                if (image != null) {
-                    // Create a thumbnail (scaled to 100x100 pixels)
-                    Image scaledImage = image.getScaledInstance(100, 100, Image.SCALE_SMOOTH);
-                    label.setIcon(new ImageIcon(scaledImage));  // Set as the label's icon
+            Image image = null;
 
-                    // Store the original image for later use (filters, resize)
-                    originalImages.put(label, image);
-                } else {
-                    // If image couldn't be loaded, show error text
-                    label.setText("Invalid image");
-                }
+            // Check if it's an absolute path (external image)
+            if (new File(resourcePath).isAbsolute()) {
+                image = ImageIO.read(new File(resourcePath));
             } else {
-                // If resource doesn't exist, show error text
-                label.setText("Not found");
+                // Normal resource path
+                URL imageUrl = getClass().getResource(resourcePath);
+                if (imageUrl != null) {
+                    image = ImageIO.read(imageUrl);
+                }
+            }
+
+            if (image != null) {
+                Image scaledImage = image.getScaledInstance(100, 100, Image.SCALE_SMOOTH);
+                label.setIcon(new ImageIcon(scaledImage));
+                originalImages.put(label, image);
+            } else {
+                label.setText("Invalid image");
             }
         } catch (Exception e) {
-            // If any exception occurs, show error text
             e.printStackTrace();
             label.setText("Error: " + e.getMessage());
         }
 
-        // Store metadata with the label
-        label.putClientProperty("albumPanel", albumPanel);     // Remember which album panel this belongs to
-        label.putClientProperty("resourcePath", resourcePath); // Remember the path to the image file
+        label.putClientProperty("albumPanel", albumPanel);
+        label.putClientProperty("resourcePath", resourcePath);
 
         // Add mouse listener to handle clicks (for full-screen view)
         label.addMouseListener(new MouseAdapter() {
@@ -148,6 +142,7 @@ public class ImageManager {
 
         return label;  // Return the configured image label
     }
+
 
     /**
      * Shows an image in full-screen view.
@@ -429,45 +424,62 @@ public class ImageManager {
     }
 
     /**
-     * Gets a list of available image paths from the resources.
+     * Gets a list of available image paths from resources or external directory.
+     * First tries to load images from embedded resources, then falls back to
+     * an external directory in the user's home folder.
      *
-     * @return An array of image resource paths
+     * @return An array of image resource paths or absolute paths for external images
      */
     public String[] getImageResourcePaths() {
-        // Define the resource folder to look in
+        // Try embedded resources first
         String folder = "/imageGallery";
         URL dirURL = getClass().getResource(folder);
 
-        // Check if directory exists
-        if (dirURL == null) {
-            System.out.println("Resource directory not found: " + folder);
-            return new String[0];  // Return empty array if not found
+        if (dirURL != null) {
+            // Existing code for embedded resources
+            File directory = new File(dirURL.getFile());
+            File[] files = directory.listFiles((dir, name) ->
+                    name.toLowerCase().endsWith(".jpg") ||
+                            name.toLowerCase().endsWith(".png") ||
+                            name.toLowerCase().endsWith(".jpeg") ||
+                            name.toLowerCase().endsWith(".gif"));
+
+            if (files != null && files.length > 0) {
+                List<String> result = new ArrayList<>();
+                for (File file : files) {
+                    result.add(folder + "/" + file.getName());
+                }
+                return result.toArray(new String[0]);
+            }
         }
 
-        // Get the directory as a File object
-        File directory = new File(dirURL.getFile());
+        // If no images in resources, look for external folder
+        String externalFolder = System.getProperty("user.home") + "/GalleryImages";
+        File externalDir = new File(externalFolder);
 
-        // Get all image files using a filter for common image extensions
-        File[] files = directory.listFiles((dir, name) ->
+        if (!externalDir.exists()) {
+            externalDir.mkdirs(); // Create folder if it doesn't exist
+            System.out.println("Folder created: " + externalFolder);
+            System.out.println("Add your images to this folder and restart the application");
+            return new String[0];
+        }
+
+        File[] externalFiles = externalDir.listFiles((dir, name) ->
                 name.toLowerCase().endsWith(".jpg") ||
                         name.toLowerCase().endsWith(".png") ||
                         name.toLowerCase().endsWith(".jpeg") ||
                         name.toLowerCase().endsWith(".gif"));
 
-        // Check if files were found
-        if (files == null) {
-            System.out.println("No files found in directory: " + directory.getAbsolutePath());
-            return new String[0];  // Return empty array if no files
+        if (externalFiles == null || externalFiles.length == 0) {
+            System.out.println("No images found in: " + externalFolder);
+            return new String[0];
         }
 
-        // Create a list of resource paths
         List<String> result = new ArrayList<>();
-        for (File file : files) {
-            // Convert to resource path format
-            result.add(folder + "/" + file.getName());
+        for (File file : externalFiles) {
+            result.add(file.getAbsolutePath()); // Absolute path for external images
         }
 
-        // Convert list to array and return
         return result.toArray(new String[0]);
     }
 

@@ -1,9 +1,8 @@
-package investify.service; // Defines the package for this class in the service layer
+package investify.service;
 
-// Imports for the AlphaVantage API library
 import com.crazzyghost.alphavantage.AlphaVantage;
 import com.crazzyghost.alphavantage.Config;
-// Imports for building the GUI dialog
+
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
@@ -23,7 +22,7 @@ public class ApiKeyManager {
      * and OK/Cancel buttons.
      *
      * @return The entered API key if the user confirms, or null if the user
-     *         cancels the dialog or closes it without confirming
+     * cancels the dialog or closes it without confirming
      */
     public String showApiKeyDialog() {
         // Creates a panel with GridBagLayout for flexible component positioning
@@ -99,7 +98,7 @@ public class ApiKeyManager {
      *
      * @param apiKey The AlphaVantage API key to use for initialization
      * @return true if initialization was successful, false if the key was invalid
-     *         or an error occurred during initialization
+     * or an error occurred during initialization
      */
     public boolean initializeApi(String apiKey) {
         // Validates the API key is not null or empty
@@ -120,38 +119,47 @@ public class ApiKeyManager {
             // Returns true to indicate successful initialization
             return true;
         } catch (Exception e) {
-            // Prints stack trace if any error occurs during initialization
-            e.printStackTrace();
+            // Display an error dialog to show the error message to the user
+            JOptionPane.showMessageDialog(
+                    null,
+                    "Error initializing API with provided key: " + e.getMessage(),
+                    "API Initialization Error",
+                    JOptionPane.ERROR_MESSAGE
+            );
+
             // Returns false to indicate initialization failed
             return false;
         }
     }
 
     /**
-     * Gère la clé API en la sauvegardant localement après la première saisie.
-     * Cherche d'abord une clé existante, et ne demande à l'utilisateur que si nécessaire.
+     * Manages API key by loading a previously saved key or prompting the user for a new one.
+     * This method first checks for an existing key in local storage.
+     * If found and valid, it uses that key without user intervention.
+     * If no key is found or the saved key is invalid, it prompts the user to enter a key.
+     * Successfully validated keys are saved locally for future use.
      *
-     * @return true si l'API est correctement initialisée, false sinon
+     * @return true if the API was successfully initialized with a valid key, false otherwise
      */
     public boolean setupApiKey() {
-        // Vérifie si une clé API est déjà enregistrée
+        // Check if an API key is already saved
         String savedKey = loadSavedApiKey();
 
         if (savedKey != null && !savedKey.isEmpty()) {
-            // Si une clé existe, l'utiliser sans demander à l'utilisateur
+            // If a key exists, use it without asking the user
             boolean success = initializeApi(savedKey);
             if (success) {
                 return true;
             }
-            // Si la clé sauvegardée n'est plus valide, demander une nouvelle clé
+            // If saved key is no longer valid, ask for a new one
         }
 
-        // Aucune clé valide trouvée, demander à l'utilisateur
+        // No valid key found, ask the user
         String newKey = showApiKeyDialog();
         if (newKey != null && !newKey.isEmpty()) {
             boolean success = initializeApi(newKey);
             if (success) {
-                // Sauvegarder la clé pour les utilisations futures
+                // Save the key for future use
                 saveApiKey(newKey);
                 return true;
             }
@@ -161,9 +169,13 @@ public class ApiKeyManager {
     }
 
     /**
-     * Charge la clé API depuis le fichier local.
+     * Loads the API key from local file storage.
+     * Attempts to read the previously saved API key from a hidden file
+     * located in the user's home directory. If the file doesn't exist
+     * or cannot be read, the method returns null.
      *
-     * @return La clé API sauvegardée, ou null si aucune n'est trouvée
+     * @return The saved API key if found and readable, or null if no key exists
+     * or if an error occurs during the reading process
      */
     private String loadSavedApiKey() {
         File keyFile = new File(System.getProperty("user.home"), ".investify_api_key");
@@ -174,15 +186,24 @@ public class ApiKeyManager {
         try (BufferedReader reader = new BufferedReader(new FileReader(keyFile))) {
             return reader.readLine();
         } catch (IOException e) {
-            System.err.println("Erreur lors de la lecture de la clé API: " + e.getMessage());
+            // Display an error dialog to inform the user
+            JOptionPane.showMessageDialog(
+                    null,
+                    "Unable to load saved API key: " + e.getMessage(),
+                    "API Key Loading Error",
+                    JOptionPane.ERROR_MESSAGE
+            );
             return null;
         }
     }
 
     /**
-     * Sauvegarde la clé API dans un fichier local.
+     * Saves the API key to a local file for persistent storage.
+     * Writes the API key to a hidden file in the user's home directory.
+     * This allows the application to remember the key between sessions
+     * without requiring the user to re-enter it each time.
      *
-     * @param apiKey La clé API à sauvegarder
+     * @param apiKey The API key to be saved
      */
     private void saveApiKey(String apiKey) {
         File keyFile = new File(System.getProperty("user.home"), ".investify_api_key");
@@ -190,7 +211,13 @@ public class ApiKeyManager {
         try (FileWriter writer = new FileWriter(keyFile)) {
             writer.write(apiKey);
         } catch (IOException e) {
-            System.err.println("Erreur lors de l'enregistrement de la clé API: " + e.getMessage());
+            // Display an error dialog to inform the user
+            JOptionPane.showMessageDialog(
+                    null,
+                    "Failed to save API key: " + e.getMessage(),
+                    "API Key Saving Error",
+                    JOptionPane.ERROR_MESSAGE
+            );
         }
     }
 

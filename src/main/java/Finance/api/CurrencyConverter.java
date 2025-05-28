@@ -48,7 +48,7 @@ public class CurrencyConverter {
 
             in.close(); // Close the input stream
 
-            System.out.println("Response JSON: " + response.toString()); // Log the complete JSON response for debugging
+            System.out.println("Response JSON: " + response); // Log the complete JSON response for debugging
 
             JSONObject json = new JSONObject(response.toString()); // Parse the JSON response into a JSONObject
             JSONObject rates = json.getJSONObject("rates"); // Extract the "rates" object from the JSON response

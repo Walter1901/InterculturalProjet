@@ -1,22 +1,16 @@
-package investify.ui; // Defines the package for this UI class
-
-// Imports for AlphaVantage API components for stock data
+package investify.ui;
 
 import com.crazzyghost.alphavantage.timeseries.response.TimeSeriesResponse;
 import com.crazzyghost.alphavantage.AlphaVantage;
 import com.crazzyghost.alphavantage.parameters.OutputSize;
-// Import for the main application class
 import investify.app.Investify;
-// Import for the transaction model
 import investify.model.Transaction;
 
-// Imports for Java Swing UI components
+
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
-// Import for file operations
 import java.io.*;
-// Import for data structure
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -25,6 +19,7 @@ import java.nio.file.Paths;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+import investify.service.RecurringInvestmentService;
 import shared.RecurringInvestment;
 
 /**
@@ -38,6 +33,7 @@ import shared.RecurringInvestment;
  */
 public class InvestifyUI { // Main UI class that manages all interface components
     private final Investify app; // Reference to the main application instance
+    private final RecurringInvestmentService recurringInvestmentService;
 
     // Card layout and panels for switching between screens
     private CardLayout mainCardLayout; // Layout manager to switch between different screens
@@ -54,6 +50,7 @@ public class InvestifyUI { // Main UI class that manages all interface component
      */
     public InvestifyUI(Investify app) {
         this.app = app; // Store reference to the main application
+        this.recurringInvestmentService = new RecurringInvestmentService(app);
     }
 
     /**
@@ -225,8 +222,7 @@ public class InvestifyUI { // Main UI class that manages all interface component
                         searchResults.setText("ERROR: Symbol not found"); // Show error if API returned an error message
                     }
                 } catch (Exception ex) { // Catch any exceptions during API call
-                    searchResults.setText("Error retrieving data."); // Display generic error message
-                    ex.printStackTrace(); // Print stack trace for debugging
+                    searchResults.setText("Error retrieving data: " + ex.getMessage()); // Display generic error message
                 }
             } else {
                 searchResults.setText("Please enter a valid symbol."); // Show validation message for empty input
@@ -265,7 +261,8 @@ public class InvestifyUI { // Main UI class that manages all interface component
                     String priceText = resultText.substring(12, resultText.indexOf(" USD")); // Extract price text
                     price = Double.parseDouble(priceText); // Parse price as double
                 } catch (Exception ex) {
-                    // Default to 0 if parsing fails
+                    System.err.println("Error parsing price: " + ex.getMessage());
+                    // Price remains 0.0 if parsing fails
                 }
             }
 
@@ -282,7 +279,8 @@ public class InvestifyUI { // Main UI class that manages all interface component
                     String priceText = resultText.substring(12, resultText.indexOf(" USD")); // Extract price text
                     price = Double.parseDouble(priceText); // Parse price as double
                 } catch (Exception ex) {
-                    // Default to 0 if parsing fails
+                    System.err.println("Error parsing price: " + ex.getMessage());
+                    // Price remains 0.0 if parsing fails
                 }
             }
 
@@ -333,7 +331,7 @@ public class InvestifyUI { // Main UI class that manages all interface component
     /**
      * Creates the content panel for the portfolio screen.
      * This method reads transaction data from storage and displays
-     * the current holdings with quantities and values.
+     * the current holdings with quantities and values. Made by AI.
      *
      * @return A JPanel containing the portfolio content
      */
@@ -429,7 +427,6 @@ public class InvestifyUI { // Main UI class that manages all interface component
                 }
             } catch (Exception e) {
                 // Handle errors when loading data
-                e.printStackTrace();
                 JLabel errorLabel = new JLabel("Error loading data.", SwingConstants.CENTER);
                 errorLabel.setForeground(Investify.textColor);
                 errorLabel.setFont(new Font("Inter", Font.PLAIN, 18));
@@ -448,8 +445,7 @@ public class InvestifyUI { // Main UI class that manages all interface component
 
     /**
      * Creates the recurrent investments screen.
-     * This screen allows users to set up automatic recurring investments
-     * (placeholder for future functionality).
+     * This screen allows users to set up automatic recurring investments. Made by AI.
      *
      * @return A JPanel representing the recurrent investments screen
      */
@@ -473,51 +469,8 @@ public class InvestifyUI { // Main UI class that manages all interface component
         recurrentLabel.setFont(new Font("Inter", Font.BOLD, 24));
         recurrentMain.add(recurrentLabel, gbcRecurrent);
 
-        // Create a "Refresh" button to reload investment data
-        JButton refreshButton = new JButton("Refresh");
-        refreshButton.setForeground(Investify.textColor);
-        refreshButton.setBackground(new Color(60, 60, 65));
-        refreshButton.setFont(new Font("Inter", Font.BOLD, 14));
-        refreshButton.addActionListener(e -> {
-            // Force reload from file system by clearing any cached data
-            System.out.println("Refreshing recurring investments from shared file");
-
-            // Find and replace the current panel with a completely fresh one
-            int index = -1;
-            for (int i = 0; i < mainPanel.getComponentCount(); i++) {
-                Component c = mainPanel.getComponent(i);
-                if (c instanceof JPanel && ((JPanel) c).getName() != null
-                        && ((JPanel) c).getName().equals("recurrent")) {
-                    index = i;
-                    break;
-                }
-            }
-
-            if (index >= 0) {
-                mainPanel.remove(index);
-                JPanel freshScreen = createRecurrentScreen();
-                mainPanel.add(freshScreen, "recurrent", index);
-                mainCardLayout.show(mainPanel, "recurrent");
-
-                // Explicitly request repainting
-                mainPanel.revalidate();
-                mainPanel.repaint();
-                System.out.println("Recurring investments view refreshed");
-            }
-        });
-
-        // Add the refresh button to a container panel
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        buttonPanel.setBackground(Investify.backgroundColor);
-        buttonPanel.add(refreshButton);
-
-        // Add the button panel to the main screen
-        gbcRecurrent.gridy = 1;
-        gbcRecurrent.weighty = 0;
-        recurrentMain.add(buttonPanel, gbcRecurrent);
-
         // Execute recurring investments and display status
-        int processedCount = executeRecurringInvestments();
+        int processedCount = recurringInvestmentService.executeRecurringInvestments();
 
         // Add execution status display
         JPanel statusPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
@@ -542,7 +495,7 @@ public class InvestifyUI { // Main UI class that manages all interface component
         investmentsPanel.setBackground(Investify.backgroundColor);
 
         // Import recurring investments data from Finance Tracker application
-        List<RecurringInvestment> importedInvestments = importRecurringInvestments();
+        List<RecurringInvestment> importedInvestments = recurringInvestmentService.importRecurringInvestments();
 
         if (!importedInvestments.isEmpty()) {
             // Create and add cards for each imported investment
@@ -653,172 +606,6 @@ public class InvestifyUI { // Main UI class that manages all interface component
         card.add(datePanel);
 
         return card;
-    }
-
-    // Add these methods directly to InvestifyUI.java
-
-    /**
-     * Executes all pending recurring investments that should run today.
-     * Prevents duplicate executions on the same day by tracking execution history.
-     *
-     * @return Number of investments executed
-     */
-    private int executeRecurringInvestments() {
-        int executedCount = 0;
-        List<RecurringInvestment> investments = importRecurringInvestments();
-        LocalDate today = LocalDate.now();
-
-        // Load or create execution history file
-        Map<String, LocalDate> executionHistory = new HashMap<>();
-        String historyPath = Paths.get(System.getProperty("user.home"), "investifyExecutionHistory.dat").toString();
-        File historyFile = new File(historyPath);
-
-        // Load existing execution history if available
-        if (historyFile.exists()) {
-            try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(historyFile))) {
-                executionHistory = (Map<String, LocalDate>) in.readObject();
-                System.out.println("Loaded execution history with " + executionHistory.size() + " entries");
-            } catch (Exception e) {
-                System.err.println("Error loading execution history: " + e.getMessage());
-            }
-        }
-
-        for (RecurringInvestment investment : investments) {
-            // Create unique identifier for this investment
-            String investmentKey = investment.getSymbol() + "-" + investment.getName();
-
-            // Check if investment should execute today based on schedule
-            if (shouldExecuteToday(investment, today)) {
-                // Check if it has already executed today
-                LocalDate lastExecution = executionHistory.get(investmentKey);
-
-                if (lastExecution == null || !lastExecution.equals(today)) {
-                    // Not yet executed today - proceed with execution
-                    executeSingleInvestment(investment);
-                    executedCount++;
-
-                    // Mark as executed today
-                    executionHistory.put(investmentKey, today);
-                    System.out.println("Executed and marked: " + investmentKey);
-                } else {
-                    // Already executed today - skip
-                    System.out.println("Skipping already executed: " + investmentKey);
-                }
-            }
-        }
-
-        // Save updated execution history
-        try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(historyFile))) {
-            out.writeObject(executionHistory);
-            System.out.println("Saved execution history with " + executionHistory.size() + " entries");
-        } catch (Exception e) {
-            System.err.println("Error saving execution history: " + e.getMessage());
-        }
-
-        // Refresh UI if needed
-        if (executedCount > 0) {
-            updateHomeScreen();
-            updatePortfolioScreen();
-        }
-
-        return executedCount;
-    }
-
-    /**
-     * Determines if a recurring investment should execute today based on its schedule.
-     *
-     * @param investment The recurring investment to check
-     * @param today      Today's date
-     * @return true if the investment should execute today
-     */
-    private boolean shouldExecuteToday(RecurringInvestment investment, LocalDate today) {
-        LocalDate startDate = investment.getStartDate();
-        if (startDate.isAfter(today)) return false;
-
-        long daysSinceStart = java.time.temporal.ChronoUnit.DAYS.between(startDate, today);
-
-        switch (investment.getFrequency().toUpperCase()) {
-            case "DAILY":
-                return true;
-            case "WEEKLY":
-                return daysSinceStart % 7 == 0;
-            case "MONTHLY":
-                return startDate.getDayOfMonth() == today.getDayOfMonth();
-            case "YEARLY":
-                return startDate.getDayOfYear() == today.getDayOfYear();
-            default:
-                return false;
-        }
-    }
-
-    /**
-     * Executes a single recurring investment by creating a buy transaction
-     * using real-time market data from AlphaVantage API.
-     *
-     * @param investment The investment to execute
-     */
-    private void executeSingleInvestment(RecurringInvestment investment) {
-        // First ensure API is properly initialized
-        if (!app.ensureApiInitialized()) {
-            System.err.println("Cannot execute investment: API not initialized");
-            return;
-        }
-
-        String symbol = investment.getSymbol();
-
-        try {
-            // Request current price data from the API
-            final double[] currentPrice = {0.0};
-            final boolean[] dataReceived = {false};
-
-            // Use AlphaVantage API to get latest quote
-            AlphaVantage.api()
-                    .timeSeries()
-                    .intraday()
-                    .forSymbol(symbol)
-                    .outputSize(OutputSize.COMPACT)
-                    .onSuccess(response -> {
-                        // Extract latest price from the response
-                        TimeSeriesResponse data = (TimeSeriesResponse) response;
-                        if (data.getStockUnits() != null && !data.getStockUnits().isEmpty()) {
-                            currentPrice[0] = data.getStockUnits().get(0).getClose();
-                            dataReceived[0] = true;
-                        }
-                    })
-                    .onFailure(e -> System.err.println("API Error: " + e.getMessage()))
-                    .fetch();
-
-            // Wait briefly for API response (simple approach)
-            Thread.sleep(2000);
-
-            // If we couldn't get data, use a fallback price
-            if (!dataReceived[0] || currentPrice[0] <= 0) {
-                System.out.println("Using fallback price for " + symbol);
-                currentPrice[0] = 100.0; // Fallback price
-            }
-
-            // Calculate quantity to buy based on investment amount and price
-            int quantity = (int) (investment.getAmount() / currentPrice[0]);
-
-            if (quantity > 0) {
-                // Execute transaction with real price data
-                app.getTransactionService().saveTransaction(
-                        "Buy",
-                        investment.getSymbol(),
-                        quantity,
-                        currentPrice[0]
-                );
-
-                System.out.println("Executed recurring investment: " +
-                        quantity + " shares of " + symbol +
-                        " at " + currentPrice[0]);
-            } else {
-                System.out.println("Investment amount too small to purchase any shares");
-            }
-        } catch (Exception e) {
-            System.err.println("Error executing recurring investment: " + e.getMessage());
-            e.printStackTrace();
-        }
     }
 
 
@@ -973,7 +760,32 @@ public class InvestifyUI { // Main UI class that manages all interface component
             layout.show(parentPanel, "portfolio"); // Switch to portfolio screen
         });
 
-        recurrentIcon.addActionListener(e -> layout.show(parentPanel, "recurrent")); // Switch to recurrent screen when clicked
+        recurrentIcon.addActionListener(e -> {
+            // Replace the current recurrent screen with a fresh one
+            int index = -1;
+            for (int i = 0; i < parentPanel.getComponentCount(); i++) {
+                Component c = parentPanel.getComponent(i);
+                if (c instanceof JPanel && ((JPanel) c).getName() != null
+                        && ((JPanel) c).getName().equals("recurrent")) {
+                    index = i;
+                    break;
+                }
+            }
+
+            if (index >= 0) {
+                parentPanel.remove(index);
+                JPanel freshScreen = createRecurrentScreen();
+                parentPanel.add(freshScreen, "recurrent", index);
+            }
+
+            // Show the updated recurrent investments screen
+            layout.show(parentPanel, "recurrent");
+
+            // Explicitly request repainting
+            parentPanel.revalidate();
+            parentPanel.repaint();
+            System.out.println("Recurring investments view refreshed");
+        });
 
         accountIcon.addActionListener(e -> layout.show(parentPanel, "account")); // Switch to account screen when clicked
 
@@ -1107,48 +919,5 @@ public class InvestifyUI { // Main UI class that manages all interface component
     }
 
 
-    /**
-     * Imports recurring investments from Finance Tracker with improved cache management.
-     * This implementation ensures that deleted investments are properly synchronized.
-     *
-     * @return List of current recurring investments from shared file
-     */
-    private List<RecurringInvestment> importRecurringInvestments() {
-        // Initialize empty result list
-        List<RecurringInvestment> result = new ArrayList<>();
-
-        // Build path to the shared data file in user's home directory
-        String sharedFilePath = Paths.get(System.getProperty("user.home"),
-                "recurringInvestments.dat").toString();
-
-        // Try-with-resources to ensure proper stream closing
-        try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(sharedFilePath))) {
-            // Read list of objects from the file
-            List<Object> importedObjects = (List<Object>) in.readObject();
-            System.out.println("Read " + importedObjects.size() + " objects from file");
-
-            // Convert each compatible object to RecurringInvestment
-            for (Object obj : importedObjects) {
-                if (obj instanceof RecurringInvestment) {
-                    RecurringInvestment sharedInv = (RecurringInvestment) obj;
-                    result.add(RecurringInvestmentAdapter.fromShared(sharedInv));
-                    System.out.println("Imported: " + sharedInv.getName());
-                } else {
-                    System.out.println("Unknown object type: " + obj.getClass().getName());
-                }
-            }
-        } catch (FileNotFoundException e) {
-            System.out.println("Shared file not found: " + e.getMessage());
-        } catch (ClassNotFoundException e) {
-            System.out.println("Class compatibility issue: " + e.getMessage());
-        } catch (IOException e) {
-            System.out.println("IO error reading file: " + e.getMessage());
-        } catch (Exception e) {
-            System.out.println("Unexpected error: " + e.getMessage());
-            e.printStackTrace();
-        }
-
-        return result;
-    }
 
 }

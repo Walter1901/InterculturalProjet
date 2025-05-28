@@ -25,5 +25,14 @@
     "name": "Jacques Jean",
     "birthDate": "22/03/2000",
     "email": "jacquesjean@gmail.com"
+  },
+  {
+    "firstName": "Walter",
+    "lastName": "Fernandes",
+    "address": "Route du Stade 22 1950 Sion",
+    "phone": "076 123 45 67",
+    "name": "Walter Fernandes",
+    "birthDate": "19/01/2004",
+    "email": "Hello@gmail.com"
   }
 ]

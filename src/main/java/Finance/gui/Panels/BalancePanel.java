@@ -7,32 +7,52 @@ import java.awt.event.*;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
+import Finance.data.BalanceStorage;
 
+// Panel for displaying and managing financial balance information
 public class BalancePanel {
+    // Data structures for storing monthly financial information
     private final Map<String, Map<String, String>> monthlyNetSavings;
     private final Map<String, Map<String, String>> monthlyDebts;
+    private final BalanceStorage balanceStorage; // Storage handler for persisting data
+
+    // UI components
     private JPanel balanceArea;
     private JComboBox<String> balanceMonthCombo;
     private JComboBox<String> balanceYearCombo;
     private static final Font TITLE_FONT = new Font("Inter", Font.BOLD, 14);
 
+    // Constructor initializes data storage and loads saved data
     public BalancePanel(Map<String, Map<String, String>> monthlyNetSavings,
                         Map<String, Map<String, String>> monthlyDebts) {
+        this.balanceStorage = new BalanceStorage();
+
+        // Load saved data from storage
+        Map<String, Map<String, String>> loadedSavings = balanceStorage.loadNetSavings();
+        Map<String, Map<String, String>> loadedDebts = balanceStorage.loadDebts();
+
+        // Initialize with passed-in maps and merge with loaded data
         this.monthlyNetSavings = monthlyNetSavings;
+        this.monthlyNetSavings.putAll(loadedSavings);
+
         this.monthlyDebts = monthlyDebts;
+        this.monthlyDebts.putAll(loadedDebts);
     }
 
+    // Creates and returns the main balance panel
     public JPanel createBalancePanel() {
         JPanel balancePanel = new JPanel(new BorderLayout());
         balancePanel.setBackground(new Color(245, 245, 250));
         balancePanel.setBorder(new EmptyBorder(15, 15, 15, 15));
 
+        // Create header panel with title and date selection
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setBackground(new Color(245, 245, 250));
 
         JPanel datePanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
         datePanel.setBackground(new Color(245, 245, 250));
 
+        // Month and year selection dropdowns
         String[] months = {"January", "February", "March", "April", "May", "June",
                 "July", "August", "September", "October", "November", "December"};
         String[] years = {"2024", "2025"};
@@ -42,6 +62,7 @@ public class BalancePanel {
         balanceMonthCombo.setFont(new Font("Inter", Font.PLAIN, 14));
         balanceYearCombo.setFont(new Font("Inter", Font.PLAIN, 14));
 
+        // Set default to current month/year
         LocalDate now = LocalDate.now();
         balanceMonthCombo.setSelectedIndex(now.getMonthValue() - 1);
         balanceYearCombo.setSelectedItem(String.valueOf(now.getYear()));
@@ -57,6 +78,7 @@ public class BalancePanel {
 
         balancePanel.add(headerPanel, BorderLayout.NORTH);
 
+        // Main content area with scroll support
         balanceArea = new JPanel(new BorderLayout());
         balanceArea.setBackground(new Color(245, 245, 250));
 
@@ -64,6 +86,7 @@ public class BalancePanel {
         scrollPane.setBorder(null);
         balancePanel.add(scrollPane, BorderLayout.CENTER);
 
+        // Date change listener to update display when month/year changes
         ItemListener dateChangeListener = e -> {
             titleLabel.setText("Balance overview");
             updateBalanceArea();
@@ -71,12 +94,14 @@ public class BalancePanel {
         balanceMonthCombo.addItemListener(dateChangeListener);
         balanceYearCombo.addItemListener(dateChangeListener);
 
+        // Bottom panel with action buttons
         JPanel bottomPanel = new JPanel(new BorderLayout());
         bottomPanel.setBackground(new Color(245, 245, 250));
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         buttonPanel.setBackground(new Color(245, 245, 250));
 
+        // Buttons for entering financial data
         JButton netSavingsButton = new JButton("Enter Net Savings");
         netSavingsButton.setBackground(new Color(0, 122, 255));
         netSavingsButton.setForeground(Color.WHITE);
@@ -93,10 +118,12 @@ public class BalancePanel {
 
         balancePanel.add(bottomPanel, BorderLayout.SOUTH);
 
+        // Initial update of the display
         updateBalanceArea();
         return balancePanel;
     }
 
+    // Shows dialog for entering financial data (either net savings or debts)
     private void enterFinancialData(String type) {
         String month = (String) balanceMonthCombo.getSelectedItem();
         String year = (String) balanceYearCombo.getSelectedItem();
@@ -105,31 +132,31 @@ public class BalancePanel {
         JPanel panel = new JPanel(new GridLayout(0, 1));
 
         if (type.equals("Net Savings")) {
+            // Net savings input fields
             JLabel currentLabel = new JLabel("Current month (CHF):");
             JTextField currentField = new JTextField();
-
             JLabel yearLabel = new JLabel("Full year (CHF):");
             JTextField yearField = new JTextField();
-
-            JLabel janLabel = new JLabel("January (CHF):");
-            JTextField janField = new JTextField();
-
-            JLabel febLabel = new JLabel("February (CHF):");
-            JTextField febField = new JTextField();
-
-            JLabel marLabel = new JLabel("March (CHF):");
-            JTextField marField = new JTextField();
 
             panel.add(currentLabel);
             panel.add(currentField);
             panel.add(yearLabel);
             panel.add(yearField);
-            panel.add(janLabel);
-            panel.add(janField);
-            panel.add(febLabel);
-            panel.add(febField);
-            panel.add(marLabel);
-            panel.add(marField);
+
+            // Add fields for previous 3 months
+            LocalDate now = LocalDate.now();
+            for (int i = 3; i >= 1; i--) {
+                LocalDate prevMonth = now.minusMonths(i);
+                String monthName = prevMonth.getMonth().name().substring(0, 1) +
+                        prevMonth.getMonth().name().substring(1).toLowerCase();
+                String monthKey = prevMonth.getMonth().name().substring(0, 3).toLowerCase(); // "mar", "apr", etc.
+
+                JLabel label = new JLabel(monthName + " (CHF):");
+                JTextField field = new JTextField();
+                field.setName(monthKey); // Store as 3-letter key (e.g., "mar")
+                panel.add(label);
+                panel.add(field);
+            }
 
             int result = JOptionPane.showConfirmDialog(null, panel,
                     "Enter Net Savings Data", JOptionPane.OK_CANCEL_OPTION);
@@ -139,17 +166,25 @@ public class BalancePanel {
                     Map<String, String> netSavingsData = new HashMap<>();
                     netSavingsData.put("current", currentField.getText());
                     netSavingsData.put("year", yearField.getText());
-                    netSavingsData.put("jan", janField.getText());
-                    netSavingsData.put("feb", febField.getText());
-                    netSavingsData.put("mar", marField.getText());
+
+                    // Get values from previous month fields
+                    Component[] components = panel.getComponents();
+                    for (Component c : components) {
+                        if (c instanceof JTextField && c.getName() != null) {
+                            netSavingsData.put(c.getName(), ((JTextField) c).getText());
+                        }
+                    }
 
                     monthlyNetSavings.put(key, netSavingsData);
+                    balanceStorage.saveNetSavings(monthlyNetSavings);
+
                     updateBalanceArea();
                 } catch (Exception ex) {
                     JOptionPane.showMessageDialog(null, "Invalid input", "Error", JOptionPane.ERROR_MESSAGE);
                 }
             }
         } else if (type.equals("Debts")) {
+            // Debts input fields
             JLabel creditLabel = new JLabel("Credit Card (CHF):");
             JTextField creditField = new JTextField();
 
@@ -171,6 +206,7 @@ public class BalancePanel {
                     debtsData.put("loan", loanField.getText());
 
                     monthlyDebts.put(key, debtsData);
+                    balanceStorage.saveDebts(monthlyDebts);
                     updateBalanceArea();
                 } catch (Exception ex) {
                     JOptionPane.showMessageDialog(null, "Invalid input", "Error", JOptionPane.ERROR_MESSAGE);
@@ -179,6 +215,7 @@ public class BalancePanel {
         }
     }
 
+    // Updates the display area with current financial data
     private void updateBalanceArea() {
         String month = (String) balanceMonthCombo.getSelectedItem();
         String year = (String) balanceYearCombo.getSelectedItem();
@@ -194,9 +231,11 @@ public class BalancePanel {
         mainPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
 
         if (monthlyNetSavings.containsKey(key) || monthlyDebts.containsKey(key)) {
+            // Create net savings card
             JPanel savingsCard = createCardPanel("Net Savings");
             Map<String, String> netSavings = monthlyNetSavings.getOrDefault(key, new HashMap<>());
 
+            // Current month and full year values
             JPanel currentMonthPanel = createValuePanel("Current Month",
                     "CHF " + netSavings.getOrDefault("current", "0"),
                     new Color(50, 205, 50));
@@ -209,6 +248,7 @@ public class BalancePanel {
             savingsCard.add(Box.createRigidArea(new Dimension(0, 5)));
             savingsCard.add(fullYearPanel);
 
+            // Monthly trend section
             JLabel trendLabel = new JLabel("Monthly Trend");
             trendLabel.setFont(new Font("Inter", Font.BOLD, 12));
             trendLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -222,25 +262,44 @@ public class BalancePanel {
             savingsCard.add(Box.createRigidArea(new Dimension(0, 5)));
             savingsCard.add(trendPanel);
 
-            String jan = netSavings.getOrDefault("jan", "0");
-            String feb = netSavings.getOrDefault("feb", "0");
-            String mar = netSavings.getOrDefault("mar", "0");
+            // Calculate current date from selection
+            LocalDate currentDate = LocalDate.of(
+                    Integer.parseInt(year),
+                    balanceMonthCombo.getSelectedIndex() + 1, // Months are 0-based in combo
+                    1
+            );
 
-            double janValue = parseDoubleSafe(jan);
-            double febValue = parseDoubleSafe(feb);
-            double marValue = parseDoubleSafe(mar);
+            // Get previous 3 months for trend analysis
+            String[] prevMonths = new String[3];
+            for (int i = 0; i < 3; i++) {
+                LocalDate prevMonth = currentDate.minusMonths(3 - i);
+                prevMonths[i] = prevMonth.getMonth().name().substring(0, 3).toLowerCase(); // "mar", "apr", etc.
+            }
 
-            trendPanel.add(createTrendItem("Jan", jan, "-", new Color(100, 100, 100)));
+            // Display trend for these months
+            trendPanel.add(createTrendItem(
+                    prevMonths[0].substring(0, 1).toUpperCase() + prevMonths[0].substring(1), // "Mar"
+                    netSavings.getOrDefault(prevMonths[0], "0"),
+                    "-",
+                    new Color(100, 100, 100)
+            ));
 
-            String febTrend = febValue > janValue ? "▲" : (febValue < janValue ? "▼" : "-");
-            Color febColor = febValue > janValue ? new Color(50, 205, 50) :
-                    (febValue < janValue ? new Color(220, 20, 60) : new Color(100, 100, 100));
-            trendPanel.add(createTrendItem("Feb", feb, febTrend, febColor));
+            // Calculate and display trends
+            for (int i = 1; i < 3; i++) {
+                double currentVal = parseDoubleSafe(netSavings.getOrDefault(prevMonths[i], "0"));
+                double prevVal = parseDoubleSafe(netSavings.getOrDefault(prevMonths[i-1], "0"));
 
-            String marTrend = marValue > febValue ? "▲" : (marValue < febValue ? "▼" : "-");
-            Color marColor = marValue > febValue ? new Color(50, 205, 50) :
-                    (marValue < febValue ? new Color(220, 20, 60) : new Color(100, 100, 100));
-            trendPanel.add(createTrendItem("Mar", mar, marTrend, marColor));
+                String trend = currentVal > prevVal ? "▲" : (currentVal < prevVal ? "▼" : "-");
+                Color color = currentVal > prevVal ? new Color(50, 205, 60) :
+                        (currentVal < prevVal ? new Color(220, 20, 60) : new Color(100, 100, 100));
+
+                trendPanel.add(createTrendItem(
+                        prevMonths[i].substring(0, 1).toUpperCase() + prevMonths[i].substring(1), // "Apr"
+                        netSavings.getOrDefault(prevMonths[i], "0"),
+                        trend,
+                        color
+                ));
+            }
 
             savingsCard.add(Box.createRigidArea(new Dimension(0, 5)));
             savingsCard.add(trendPanel);
@@ -248,6 +307,7 @@ public class BalancePanel {
             mainPanel.add(savingsCard);
             mainPanel.add(Box.createRigidArea(new Dimension(0, 10)));
 
+            // Create debts card
             JPanel debtsCard = createCardPanel("Debts");
             Map<String, String> debts = monthlyDebts.getOrDefault(key, new HashMap<>());
 
@@ -266,6 +326,7 @@ public class BalancePanel {
             mainPanel.add(debtsCard);
             mainPanel.add(Box.createRigidArea(new Dimension(0, 10)));
 
+            // Calculate and display net worth
             try {
                 double assets = Double.parseDouble(netSavings.getOrDefault("year", "0"));
                 double totalDebts = Double.parseDouble(debts.getOrDefault("credit", "0")) +
@@ -282,23 +343,24 @@ public class BalancePanel {
                 // Ignore invalid numbers
             }
         } else {
-        JPanel emptyPanel = new JPanel();
-        emptyPanel.setLayout(new BoxLayout(emptyPanel, BoxLayout.Y_AXIS));
-        emptyPanel.setBackground(new Color(245, 245, 250)); // Gleicher Hintergrund wie InvestmentPanel
+            // Show empty state if no data available
+            JPanel emptyPanel = new JPanel();
+            emptyPanel.setLayout(new BoxLayout(emptyPanel, BoxLayout.Y_AXIS));
+            emptyPanel.setBackground(new Color(245, 245, 250));
 
-        JLabel emptyLabel = new JLabel("No data available. Please enter financial data.");
-        emptyLabel.setFont(new Font("Inter", Font.PLAIN, 14)); // DETAIL_FONT
-        emptyLabel.setForeground(Color.GRAY);
-        emptyLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+            JLabel emptyLabel = new JLabel("No data available. Please enter financial data.");
+            emptyLabel.setFont(new Font("Inter", Font.PLAIN, 14));
+            emptyLabel.setForeground(Color.GRAY);
+            emptyLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        emptyPanel.add(Box.createVerticalGlue());
-        emptyPanel.add(emptyLabel);
-        emptyPanel.add(Box.createVerticalGlue());
+            emptyPanel.add(Box.createVerticalGlue());
+            emptyPanel.add(emptyLabel);
+            emptyPanel.add(Box.createVerticalGlue());
 
-        mainPanel.add(emptyPanel);
-    }
+            mainPanel.add(emptyPanel);
+        }
 
-    JScrollPane scrollPane = new JScrollPane(mainPanel);
+        JScrollPane scrollPane = new JScrollPane(mainPanel);
         scrollPane.setBorder(null);
         balanceArea.add(scrollPane, BorderLayout.CENTER);
 
@@ -306,6 +368,7 @@ public class BalancePanel {
         balanceArea.repaint();
     }
 
+    // Helper method to safely parse double values
     private double parseDoubleSafe(String value) {
         try {
             return Double.parseDouble(value);
@@ -314,6 +377,7 @@ public class BalancePanel {
         }
     }
 
+    // Creates a styled card panel for financial information
     private JPanel createCardPanel(String title) {
         JPanel card = new JPanel();
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
@@ -333,6 +397,7 @@ public class BalancePanel {
         return card;
     }
 
+    // Creates a panel displaying a labeled value with specific formatting
     private JPanel createValuePanel(String label, String value, Color valueColor) {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Color.WHITE);
@@ -353,6 +418,7 @@ public class BalancePanel {
         return panel;
     }
 
+    // Creates a trend indicator item showing month, value, and trend arrow
     private JPanel createTrendItem(String month, String value, String trendIcon, Color color) {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));

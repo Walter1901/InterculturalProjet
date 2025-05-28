@@ -11,18 +11,11 @@ public class MainPanel {
     private final CardLayout cardLayout;
     // This panel holds all the different screens we can switch between
     private final JPanel cardPanel;
-    // Label to say "Hello <username>" on top
-    private JLabel helloLabel;
-    // Button so the user can log out
-    private JButton logoutButton;
-    // The name of the user logged in
-    private String username;
 
-    // Constructor to set up the panel with the layout, container, and username
-    public MainPanel(CardLayout cardLayout, JPanel cardPanel, String username) {
+    // Constructor to set up the panel with the layout, container
+    public MainPanel(CardLayout cardLayout, JPanel cardPanel) {
         this.cardLayout = cardLayout;
         this.cardPanel = cardPanel;
-        this.username = username;
     }
 
     // This builds the main panel UI with greeting, logo, menu, and logout button
@@ -32,20 +25,10 @@ public class MainPanel {
         // Background color
         mainPanel.setBackground(new Color(245, 245, 250));
 
-        // If no username is set, just say "User"
-        String displayName = (username == null || username.isEmpty()) ? "User" : username;
-
-        // Create the hello label with the username or "User"
-        helloLabel = new JLabel("Hello " + displayName, SwingConstants.LEFT);
-        helloLabel.setFont(new Font("Inter", Font.PLAIN, 18));
-        helloLabel.setForeground(new Color(50, 50, 50)); // dark gray color
-        helloLabel.setBorder(new EmptyBorder(10, 10, 0, 10)); // some padding on top and sides
-        mainPanel.add(helloLabel, BorderLayout.NORTH); // put it at the top
-
         // Now load the logo image and put it in the middle of the panel
         try {
             // Look for the image file in resources folder
-            URL imageUrl = getClass().getResource("/finance/logo.png");
+            URL imageUrl = getClass().getResource("/Finance/logo.png");
             if (imageUrl != null) {
                 ImageIcon logoIcon = new ImageIcon(imageUrl);
                 // Scale the logo nicely to 350x200 pixels
@@ -78,34 +61,13 @@ public class MainPanel {
         menuPanel.add(Box.createRigidArea(new Dimension(0, 10)));
         menuPanel.add(UIComponents.createMenuItem("Saving goals", "🎯", () -> cardLayout.show(cardPanel, "goals")));
         menuPanel.add(Box.createRigidArea(new Dimension(0, 10)));
-        menuPanel.add(UIComponents.createMenuItem("Investment", "📈", () -> cardLayout.show(cardPanel, "investment")));
+        menuPanel.add(UIComponents.createMenuItem("Investment", "\uD83D\uDCB0", () -> cardLayout.show(cardPanel, "investment")));
         menuPanel.add(Box.createRigidArea(new Dimension(0, 10)));
-
-        // Now add the logout button at the bottom of the menu
-        logoutButton = new JButton("Logout");
-        logoutButton.setAlignmentX(Component.CENTER_ALIGNMENT); // center horizontally
-        logoutButton.addActionListener(event -> onLogout());
-        menuPanel.add(logoutButton);
-        // Only show the logout button if there's a logged-in user
-        logoutButton.setVisible(username != null && !username.isEmpty());
 
         // Put the menu panel at the bottom of the main panel
         mainPanel.add(menuPanel, BorderLayout.SOUTH);
 
         return mainPanel; // return the finished panel
-    }
-
-    // Method to update the username and refresh the greeting + logout button visibility
-    public void setUsername(String username) {
-        this.username = username;
-        if (helloLabel != null) {
-            String displayName = (username == null || username.isEmpty()) ? "User" : username;
-            helloLabel.setText("Hello " + displayName);
-        }
-        // Show or hide logout button depending if user is logged in
-        if (logoutButton != null) {
-            logoutButton.setVisible(username != null && !username.isEmpty());
-        }
     }
 
     // This is a callback function that will run when the user logs out

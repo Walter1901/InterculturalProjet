@@ -1,13 +1,8 @@
 package Address;// Nécessite org.json dans les dépendances Maven
-
 import org.json.JSONObject;
+import java.net.*;
+import java.io.*;
 import org.jxmapviewer.viewer.GeoPosition;
-
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLEncoder;
 
 public class GeoPositionClass {
 
@@ -25,7 +20,7 @@ public class GeoPositionClass {
                     JSONObject obj = arr.getJSONObject(0);
                     double lat = obj.getDouble("lat");
                     double lon = obj.getDouble("lon");
-                    return new org.jxmapviewer.viewer.GeoPosition(lat, lon);
+                    return new GeoPosition(lat, lon);
                 }
             }
         } catch (Exception e) {

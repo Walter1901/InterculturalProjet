@@ -1,14 +1,10 @@
-package investify.service; // Defines the package for this service class within the application structure
+package investify.service;
 
-// Imports for the transaction model and JSON parsing utilities
 import investify.model.Transaction;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-
-// Imports for Java Swing UI components
 import javax.swing.*;
 import java.awt.*;
-// Imports for file operations and collections
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -130,7 +126,6 @@ public class TransactionService { // Main class for handling stock transaction o
                         "Please enter a valid number.",
                         "Error", JOptionPane.ERROR_MESSAGE);
             } catch (Exception ex) { // Catches any other exceptions that might occur
-                ex.printStackTrace(); // Prints stack trace for debugging
                 JOptionPane.showMessageDialog(dialog,
                         "Error while recording the transaction.",
                         "Error", JOptionPane.ERROR_MESSAGE);
@@ -144,7 +139,7 @@ public class TransactionService { // Main class for handling stock transaction o
      * Saves a transaction to persistent storage.
      * This method creates a new Transaction object and appends it to the existing
      * transaction history in the JSON data file. If the file doesn't exist yet,
-     * it will be created. Uses the Gson library with pretty printing for JSON formatting.
+     * it will be created. Uses the Gson library with pretty printing for JSON formatting. Made by AI.
      *
      * @param action The type of transaction ("Buy" or "Sell")
      * @param symbol The stock ticker symbol
@@ -183,7 +178,7 @@ public class TransactionService { // Main class for handling stock transaction o
     /**
      * Reads transactions from the specified JSON file.
      * This method deserializes the JSON content into an array of Transaction objects.
-     * It uses the Gson library to parse the JSON data structure.
+     * It uses the Gson library to parse the JSON data structure. Made by AI.
      *
      * @param file The JSON file containing transaction data
      * @return An array of Transaction objects, or null if an error occurs during reading or parsing
@@ -192,9 +187,14 @@ public class TransactionService { // Main class for handling stock transaction o
         try (FileReader reader = new FileReader(file)) { // Opens file reader with auto-closing
             Gson gson = new Gson(); // Creates Gson instance for JSON parsing
             return gson.fromJson(reader, Transaction[].class); // Parses JSON into array of Transaction objects
-        } catch (Exception e) { // Catches any exceptions during file reading or parsing
-            e.printStackTrace(); // Prints stack trace for debugging
-            return null; // Returns null to indicate loading failure
+        } catch (Exception e) { // Catches any exception that occurs during file reading or parsing
+            JOptionPane.showMessageDialog( // Displays an error dialog to the user
+                    null, // No parent component for the dialog
+                    "An error occurred while loading transactions.", // Error message shown to the user
+                    "Error", // Title of the dialog window
+                    JOptionPane.ERROR_MESSAGE // Specifies the dialog type as an error
+            );
+            return null; // Returns null if an error occurred
         }
     }
 }

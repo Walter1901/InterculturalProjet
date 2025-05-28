@@ -2,17 +2,15 @@ package Address;
 
 import org.jxmapviewer.JXMapViewer;
 import org.jxmapviewer.viewer.*;
-import org.jxmapviewer.viewer.DefaultWaypoint;
 import org.jxmapviewer.viewer.Waypoint;
+import org.jxmapviewer.viewer.DefaultWaypoint;
 import org.jxmapviewer.viewer.WaypointPainter;
 
+import java.util.Set;
+import java.util.HashSet;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionAdapter;
-import java.util.HashSet;
-import java.util.Set;
+import java.awt.event.*;
 
 public class MapPanel extends JPanel {
     private JXMapViewer mapViewer = new JXMapViewer();

@@ -107,8 +107,12 @@ public class Contact implements Serializable {
         return photo;
     }
 
-    public void setPhoto(ImageIcon photo) {
-        this.photo = photo;
+    public void setPhoto(String photoPath) {
+        if (photoPath != null && !photoPath.isEmpty()) {
+            this.photo = new ImageIcon(photoPath);
+        } else {
+            this.photo = null;
+        }
     }
 
     /**

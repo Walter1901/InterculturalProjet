@@ -1,7 +1,8 @@
-package investify.service; // Defines the package for this service class
+package investify.service;
 
-// Imports needed for transaction handling and data structures
 import investify.model.Transaction;
+
+import javax.swing.*;
 import java.util.*;
 import java.io.*;
 
@@ -47,7 +48,7 @@ public class PortfolioManager { // Main class responsible for managing investmen
 
     /**
      * Loads and processes transactions from the storage file.
-     * This method reads transaction data, clears existing holdings, and updates the portfolio state.
+     * This method reads transaction data, clears existing holdings, and updates the portfolio state. Made by AI.
      */
     public void loadTransactions() { // Method to retrieve transaction data from file
         // Clears existing data to prevent duplication
@@ -67,14 +68,20 @@ public class PortfolioManager { // Main class responsible for managing investmen
                     processTransactions(transactions); // Processes the transaction array
                 }
             } catch (Exception e) { // Handles any exceptions during file operations
-                e.printStackTrace(); // Prints stack trace for debugging
+                // Shows an error dialog to the user if transaction loading fails
+                JOptionPane.showMessageDialog(
+                        null,
+                        "An error occurred while loading transactions:\n" + e.getMessage(),
+                        "Load Error",
+                        JOptionPane.ERROR_MESSAGE
+                );
             }
         }
     }
 
     /**
      * Processes an array of transactions to update holdings and total values.
-     * This method calculates the net quantity and value for each stock in the portfolio.
+     * This method calculates the net quantity and value for each stock in the portfolio. Made by AI.
      *
      * @param transactions The array of transactions to process
      */

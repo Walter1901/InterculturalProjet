@@ -3,6 +3,7 @@ package Address.models;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.awt.Graphics2D;
 
 /**
  * Custom cell renderer for contact list with iOS-style appearance
@@ -32,7 +33,7 @@ public class ContactCellRenderer extends JPanel implements ListCellRenderer<Cont
         photoLabel.setPreferredSize(new Dimension(40, 40));
         photoLabel.setHorizontalAlignment(SwingConstants.CENTER);
         photoLabel.setVerticalAlignment(SwingConstants.CENTER);
-        
+
         // Initialize default icon
         defaultIcon = createDefaultAvatar(new Contact("A", "", "", "", "", "", "", null));
         photoLabel.setIcon(defaultIcon);
@@ -99,8 +100,20 @@ public class ContactCellRenderer extends JPanel implements ListCellRenderer<Cont
         // Set background color
         setBackground(isSelected ? SELECTED_BACKGROUND : DEFAULT_BACKGROUND);
 
-        // Update photo
-        updatePhoto(contact);
+        // Update photo - CORRECTION ICI
+        ImageIcon contactPhoto = contact.getPhoto();
+        if (contactPhoto != null) {
+            // Scale the existing ImageIcon
+            Image photo = contactPhoto.getImage();
+            if (photo != null) {
+                photo = photo.getScaledInstance(40, 40, Image.SCALE_SMOOTH);
+                photoLabel.setIcon(new ImageIcon(photo));
+            } else {
+                photoLabel.setIcon(createDefaultAvatar(contact));
+            }
+        } else {
+            photoLabel.setIcon(createDefaultAvatar(contact));
+        }
 
         // Update text content
         updateTextContent(contact, isSelected);

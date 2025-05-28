@@ -1,15 +1,19 @@
-package investify.app; // Package declaration for the application
+package investify.app;
 
-// Imports for application services and UI components
 import investify.service.*;
 import investify.ui.InvestifyUI;
-
-// Swing and AWT imports for GUI components
 import javax.swing.*;
 import java.awt.*;
 
 /**
  * Main class for the Investify application.
+ * This class serves as the entry point for the application, initializing
+ * all core services and creating the main user interface.
+ * <p>
+ * The application was originally implemented in a single file. Following the code review on May 21st, the instructors
+ * recommended applying a design pattern such as MVC. The code was refactored by IA into multiple packages and classes to
+ * align with this architecture. I took the time to understand the code that was added and modified by the AI. The comments
+ * and javadoc documentation were also added by the AI to clarify the purpose and functionality of each component.
  */
 public class Investify {
 
@@ -52,14 +56,10 @@ public class Investify {
     /**
      * Creates the main Investify user interface.
      * This method initializes and configures the primary application UI
-     * without requesting an API key on startup. API keys will only be
-     * requested when needed for specific features.
      *
      * @return A configured JPanel containing the complete Investify interface
      */
     public JPanel createInvestify() {
-        // Doesn't request API key on startup
-        // API key will only be requested when needed for specific features
         return ui.createMainPanel(); // Delegates UI creation to UI service
     }
 
@@ -70,14 +70,13 @@ public class Investify {
      * If already initialized, it returns true without further action.
      *
      * @return true if the API is successfully initialized or was already initialized,
-     *         false if initialization fails or the user cancels the operation
+     * false if initialization fails or the user cancels the operation
      */
     public boolean ensureApiInitialized() {
         if (apiKeyInitialized) {
             return true;
         }
 
-        // Utilise la nouvelle méthode pour configurer la clé API
         if (apiKeyManager.setupApiKey()) {
             apiKeyInitialized = true;
             return true;
@@ -86,25 +85,6 @@ public class Investify {
         return false;
     }
 
-    /**
-     * Creates an error panel with a specified message.
-     * The panel uses the application's standard color scheme and font styling
-     * to display an error message to the user.
-     *
-     * @param message The error message to display
-     * @return A configured JPanel displaying the error message
-     */
-    private JPanel createErrorPanel(String message) {
-        JPanel errorPanel = new JPanel(new BorderLayout()); // Create panel with border layout
-        errorPanel.setBackground(backgroundColor); // Apply app background color
-
-        JLabel errorLabel = new JLabel(message, SwingConstants.CENTER); // Create centered error message
-        errorLabel.setForeground(textColor); // Apply app text color
-        errorLabel.setFont(new Font("Inter", Font.BOLD, 18)); // Set bold font for emphasis
-
-        errorPanel.add(errorLabel, BorderLayout.CENTER); // Add message to center of panel
-        return errorPanel; // Return the configured error panel
-    }
 
     /**
      * Provides access to the application's portfolio management service.

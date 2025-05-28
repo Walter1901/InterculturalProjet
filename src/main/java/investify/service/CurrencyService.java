@@ -8,7 +8,7 @@ package investify.service; // Defines the package for this service class within 
  */
 public class CurrencyService { // Main class for handling currency operations and conversions
     private String currentCurrency = "USD"; // Stores the currently selected currency, with USD as default
-    private final double USD_TO_CHF = 0.89; // Defines the fixed exchange rate from USD to Swiss Francs
+    private final double USD_TO_CHF = 0.83; // Defines the fixed exchange rate from USD to Swiss Francs
 
     /**
      * Sets the current application currency.

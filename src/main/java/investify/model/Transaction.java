@@ -1,4 +1,4 @@
-package investify.model; // Defines the namespace for this class within the application structure
+package investify.model;
 
 /**
  * Represents a stock transaction in the Investify application.

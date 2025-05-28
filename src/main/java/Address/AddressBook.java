@@ -28,6 +28,7 @@ public class AddressBook {
     private static JList<Contact> contactList;
     private static DefaultListModel<Contact> listModel;
     private static JPanel contactDetailsPanel;
+    private static JPanel infoPanel;
     private static Contact selectedContact;
 
     /**
@@ -242,6 +243,11 @@ public class AddressBook {
         contactDetailsPanel.setLayout(new BoxLayout(contactDetailsPanel, BoxLayout.Y_AXIS));
         contactDetailsPanel.setBackground(backgroundColor);
 
+        // Info panel
+        infoPanel = new JPanel();
+        infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
+        infoPanel.setBackground(backgroundColor);
+
         JScrollPane detailsScrollPane = new JScrollPane(contactDetailsPanel);
         detailsScrollPane.setPreferredSize(new Dimension(350, 200));
         detailsScrollPane.getViewport().setBackground(backgroundColor);
@@ -355,52 +361,73 @@ public class AddressBook {
      * Update contact details panel
      */
     private static void updateContactDetails(Contact contact) {
+        if (contact == null) {
+            contactDetailsPanel.removeAll();
+            contactDetailsPanel.revalidate();
+            contactDetailsPanel.repaint();
+            return;
+        }
+
+        // Clear existing components
         contactDetailsPanel.removeAll();
 
-        if (contact == null) {
-            JLabel noSelectionLabel = new JLabel("Select a contact");
-            noSelectionLabel.setForeground(textColor);
-            noSelectionLabel.setFont(new Font("Inter", Font.PLAIN, 12));
-            contactDetailsPanel.add(noSelectionLabel);
-        } else {
-            addContactField("First Name:", contact.getFirstName());
-            addContactField("Last Name:", contact.getLastName());
-            addContactField("Phone:", contact.getPhone());
-            addContactField("Email:", contact.getEmail());
-            addContactField("Address:", contact.getAddress());
-            addContactField("Birth Date:", contact.getBirthDate());
+        // Create photo panel
+        JPanel photoPanel = new JPanel(new BorderLayout());
+        photoPanel.setBackground(cardColor);
+
+        if (contact != null && contact.getPhoto() != null && contact.getPhoto().getImage() != null) {
+            try {
+                ImageIcon icon = new ImageIcon(String.valueOf(contact.getPhoto()));
+                Image image = icon.getImage().getScaledInstance(50, 50, Image.SCALE_SMOOTH);
+                JLabel photoLabel = new JLabel(new ImageIcon(image));
+                photoLabel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 10));
+                photoPanel.add(photoLabel, BorderLayout.WEST);
+            } catch (Exception e) {
+                System.err.println("Error loading profile photo: " + e.getMessage());
+            }
         }
+
+        // Add contact fields directly to contactDetailsPanel
+        addContactField(contactDetailsPanel, "First Name:", contact.getFirstName());
+        addContactField(contactDetailsPanel, "Last Name:", contact.getLastName());
+        addContactField(contactDetailsPanel, "Phone:", contact.getPhone());
+        addContactField(contactDetailsPanel, "Email:", contact.getEmail());
+        addContactField(contactDetailsPanel, "Address:", contact.getAddress());
+        addContactField(contactDetailsPanel, "Birth Date:", contact.getBirthDate());
+
+        // Add everything to the main panel
+        contactDetailsPanel.add(photoPanel, BorderLayout.WEST);
 
         contactDetailsPanel.revalidate();
         contactDetailsPanel.repaint();
     }
 
     /**
-     * Add a contact field to the details panel
+     * Add a contact field to the contact details panel
      */
-    private static void addContactField(String label, String value) {
-        JPanel fieldPanel = new JPanel(new BorderLayout(5, 5));
-        fieldPanel.setBorder(BorderFactory.createEmptyBorder(3, 5, 3, 5));
+    private static void addContactField(JPanel panel, String label, String value) {
+        JPanel fieldPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
         fieldPanel.setBackground(backgroundColor);
 
         JLabel fieldLabel = new JLabel(label);
-        fieldLabel.setPreferredSize(new Dimension(80, 20));
-        fieldLabel.setFont(new Font("Inter", Font.PLAIN, 10));
         fieldLabel.setForeground(textColor);
+        fieldLabel.setFont(new Font("Inter", Font.PLAIN, 12));
 
-        JTextField fieldValue = new JTextField(value);
-        fieldValue.setFont(new Font("Inter", Font.PLAIN, 10));
-        fieldValue.setBackground(cardColor);
-        fieldValue.setForeground(textColor);
-        fieldValue.setBorder(BorderFactory.createEmptyBorder(2, 5, 2, 5));
+        JTextField textField = new JTextField(value);
+        textField.setFont(new Font("Inter", Font.PLAIN, 12));
+        textField.setBackground(cardColor);
+        textField.setForeground(textColor);
+        textField.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
 
-        fieldPanel.add(fieldLabel, BorderLayout.WEST);
-        fieldPanel.add(fieldValue, BorderLayout.CENTER);
+        fieldPanel.add(fieldLabel);
+        fieldPanel.add(textField);
 
-        contactDetailsPanel.add(fieldPanel);
+        panel.add(fieldPanel);
     }
 
-    // Les autres méthodes restent similaires mais adaptées pour les composants statiques
+    /**
+     * Save current contact
+     */
     private static void saveCurrentContact() {
         if (selectedContact == null) return;
 
@@ -421,16 +448,67 @@ public class AddressBook {
     }
 
     private static Contact createUpdatedContactFromForm() {
-        Component[] components = contactDetailsPanel.getComponents();
-        String firstName = getFieldValue(components, 0);
-        String lastName = getFieldValue(components, 1);
-        String phone = getFieldValue(components, 2);
-        String email = getFieldValue(components, 3);
-        String address = getFieldValue(components, 4);
-        String birthDate = getFieldValue(components, 5);
+        try {
+            // Récupérer les valeurs depuis les champs de texte dans contactDetailsPanel
+            String firstName = "";
+            String lastName = "";
+            String phone = "";
+            String email = "";
+            String address = "";
+            String birthDate = "";
 
-        return new Contact(firstName + " " + lastName, phone, firstName, lastName,
-                birthDate, address, email, selectedContact.getPhoto());
+            // Parcourir les composants pour extraire les valeurs
+            Component[] components = contactDetailsPanel.getComponents();
+            for (Component comp : components) {
+                if (comp instanceof JPanel) {
+                    JPanel panel = (JPanel) comp;
+                    Component[] subComponents = panel.getComponents();
+                    for (Component subComp : subComponents) {
+                        if (subComp instanceof JPanel) {
+                            // C'est probablement un fieldPanel
+                            JPanel fieldPanel = (JPanel) subComp;
+                            Component[] fieldComponents = fieldPanel.getComponents();
+                            if (fieldComponents.length >= 2) {
+                                JLabel label = (JLabel) fieldComponents[0];
+                                JTextField textField = (JTextField) fieldComponents[1];
+
+                                String labelText = label.getText();
+                                String value = textField.getText();
+
+                                switch (labelText) {
+                                    case "First Name:":
+                                        firstName = value;
+                                        break;
+                                    case "Last Name:":
+                                        lastName = value;
+                                        break;
+                                    case "Phone:":
+                                        phone = value;
+                                        break;
+                                    case "Email:":
+                                        email = value;
+                                        break;
+                                    case "Address:":
+                                        address = value;
+                                        break;
+                                    case "Birth Date:":
+                                        birthDate = value;
+                                        break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            return new Contact(firstName + " " + lastName, phone, firstName, lastName,
+                    birthDate, address, email, selectedContact.getPhoto());
+
+        } catch (Exception e) {
+            System.err.println("Error creating updated contact: " + e.getMessage());
+            // Retourner le contact original en cas d'erreur
+            return selectedContact;
+        }
     }
 
     private static String getFieldValue(Component[] components, int fieldIndex) {
@@ -466,8 +544,15 @@ public class AddressBook {
 
     private static void addPhotoToContact() {
         if (selectedContact == null) return;
-        // Implementation depends on your GalleryFrame class
-        JOptionPane.showMessageDialog(null, "Photo feature - to be implemented");
+
+        GalleryFrame galleryFrame = new GalleryFrame(selectedContact);
+        galleryFrame.addWindowListener(new java.awt.event.WindowAdapter() {
+            public void windowClosing(java.awt.event.WindowEvent e) {
+                updateContactDetails(selectedContact);
+                updateContactList(ContactManager.getContacts());
+                refreshHomeStats();
+            }
+        });
     }
 
     private static void showContactOnMap() {
@@ -478,45 +563,21 @@ public class AddressBook {
     }
 
     private static void showAddContactDialog() {
-        // Créer un nouveau panel pour l'onglet d'ajout
-        JPanel addContactPanel = new JPanel(new BorderLayout());
-        addContactPanel.setBackground(backgroundColor);
-
-        // Créer et configurer le dialogue d'ajout
         AddContactDialog dialog = new AddContactDialog(null);
-        dialog.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        dialog.setSize(400, 500);
-        dialog.setLocationRelativeTo(null);
-        dialog.setVisible(true);
+        dialog.setVisible(true); // bloque jusqu'à fermeture
 
-        // Ajouter le dialogue au panel
-        addContactPanel.add(dialog, BorderLayout.CENTER);
-
-        // Ajouter l'onglet
-        int index = tabbedPane.getTabCount();
-        tabbedPane.addTab("Add Contact", createContactIcon(), addContactPanel, "Add a new contact");
-        tabbedPane.setSelectedIndex(index);
-
-        // Gérer la fermeture du dialogue
-        dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-            public void windowClosing(java.awt.event.WindowEvent e) {
-                // Supprimer l'onglet lors de la fermeture
-                tabbedPane.removeTabAt(index);
-
-                // Si un contact a été créé, le sauvegarder
-                if (dialog.getContact() != null) {
-                    Contact newContact = dialog.getContact();
-                    if (ContactManager.addContact(newContact)) {
-                        updateContactList(ContactManager.getContacts());
-                        JOptionPane.showMessageDialog(null, "Contact added successfully!");
-                        refreshHomeStats();
-                    } else {
-                        JOptionPane.showMessageDialog(null, "Error adding contact!", "Error", JOptionPane.ERROR_MESSAGE);
-                    }
-                }
+        Contact newContact = dialog.getContact();
+        if (newContact != null) {
+            if (ContactManager.addContact(newContact)) {
+                updateContactList(ContactManager.getContacts());
+                JOptionPane.showMessageDialog(null, "Contact added successfully!");
+                refreshHomeStats(); // Facultatif selon ton app
+            } else {
+                JOptionPane.showMessageDialog(null, "Error adding contact!", "Error", JOptionPane.ERROR_MESSAGE);
             }
-        });
+        }
     }
+
 
     public static void refreshHomeStats() {
         createHomePanel();

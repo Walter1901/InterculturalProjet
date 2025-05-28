@@ -10,6 +10,7 @@ import java.awt.dnd.DragSource;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -327,7 +328,13 @@ public class AlbumManager {
     public void addImageToAlbum(String albumName, String imagePath) {
         // Compress the image before adding it
         TinyPNGService tinyPNGService = new TinyPNGService();
-        File originalFile = new File("src/main/resources" + imagePath);
+        URL resourceUrl = AlbumManager.class.getResource(imagePath);
+        File originalFile;
+        if (resourceUrl != null) {
+            originalFile = new File(resourceUrl.getFile());
+        } else {
+            throw new IllegalArgumentException("Image resource not found: " + imagePath);
+        }
         File compressedFile = tinyPNGService.compressImage(originalFile);
 
         // Convert absolute path to relative path

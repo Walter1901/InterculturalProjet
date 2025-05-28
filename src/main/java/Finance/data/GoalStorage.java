@@ -63,11 +63,9 @@ public class GoalStorage {
             // Return empty list if file was empty
             return goals != null ? goals : new ArrayList<>();
 
-        } catch (IOException e) {
-            System.err.println("Error reading goals file: " + e.getMessage());
-            return new ArrayList<>();
-        } catch (JsonSyntaxException e) {
-            System.err.println("Invalid JSON format in goals file: " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("Error loading goals: " + e.getMessage());
+            // Rückfall auf leere Liste
             return new ArrayList<>();
         }
     }

@@ -1,17 +1,12 @@
-package investify.service; // Defines the package for this service class in the application structure
+package investify.service;
 
-// Import classes from the application
 import investify.app.Investify;
-
-// Imports for JFreeChart library to create charts
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PiePlot;
 import org.jfree.chart.title.LegendTitle;
 import org.jfree.data.general.DefaultPieDataset;
-
-// Imports for Java Swing UI components
 import javax.swing.*;
 import java.awt.*;
 import java.util.Map;
@@ -40,11 +35,11 @@ public class ChartService { // Main class responsible for creating investment po
     /**
      * Creates a pie chart panel that visualizes the distribution of investments in the portfolio.
      * The chart shows the relative value of each stock holding as a proportion of the total portfolio.
-     * If no portfolio data is available, a message is displayed instead.
+     * If no portfolio data is available, a message is displayed instead. Made by IA.
      *
      * @return A JPanel containing either the pie chart or a message indicating no data is available
      */
-    public JPanel createPieChartPanel() { // Method to generate a pie chart panel for portfolio distribution
+    public JPanel createPieChartPanel() {
         // Creates the main panel with BorderLayout to hold the chart
         JPanel chartPanel = new JPanel(new BorderLayout());
         // Sets background color to match application theme
