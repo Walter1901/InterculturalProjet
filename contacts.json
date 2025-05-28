@@ -1,0 +1,29 @@
+[
+  {
+    "firstName": "Jean",
+    "lastName": "Dupont",
+    "address": "Route des Fontanettes 16 3972 Miège",
+    "phone": "079 123 45 67",
+    "name": "Jean Dupont",
+    "birthDate": "15/05/1980",
+    "email": "jean.dupont@bluewin.ch"
+  },
+  {
+    "firstName": "Arnaud",
+    "lastName": "Schriber",
+    "address": "Rue du Stade 23 1950 Sion",
+    "phone": "079 999 99 99",
+    "name": "Arnaud Schriber",
+    "birthDate": "22/03/2002",
+    "email": "arnaud@gmail.com"
+  },
+  {
+    "firstName": "Jacques",
+    "lastName": "Jean",
+    "address": "I-75, Richmond, KY 40475, États-Unis  ",
+    "phone": "079 987 65 43",
+    "name": "Jacques Jean",
+    "birthDate": "22/03/2000",
+    "email": "jacquesjean@gmail.com"
+  }
+]

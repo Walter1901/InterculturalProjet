@@ -1,6 +1,7 @@
 package Address.models;
 
 import javax.swing.*;
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
 
@@ -9,6 +10,7 @@ import java.util.Objects;
  * Implements Serializable for JSON persistence
  */
 public class Contact implements Serializable {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private String name;

@@ -1,778 +1,536 @@
 package Address;
 
+import Address.models.*;
+
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
-import javax.swing.text.*;
 
-import Address.models.Contact;
-import Address.models.ContactManager;
-import org.jxmapviewer.input.PanMouseInputListener;
-import org.jxmapviewer.input.ZoomMouseWheelListenerCenter;
-
+/**
+ * Main AddressBook application class that integrates all functionalities
+ * Provides a tabbed interface with contacts, map, and gallery features
+ * Modified to work with phoneUtils infrastructure
+ */
 public class AddressBook {
+    private static final Color backgroundColor = new Color(28, 28, 30);
+    private static final Color textColor = new Color(255, 255, 255);
+    private static final Color cardColor = new Color(44, 44, 46);
 
-    private static DefaultListModel<Contact> contactListModel;
-    private static ImageIcon contactIcon;
-    private static JPanel mainPanel;
+    // Main components
+    public static JTabbedPane tabbedPane;
+    private static ContactFrame contactFrame;
+    private static MapPanel mapPanel;
+    private static JPanel homePanel;
 
+    // Contact management components
+    private static JList<Contact> contactList;
+    private static DefaultListModel<Contact> listModel;
+    private static JPanel contactDetailsPanel;
+    private static Contact selectedContact;
+
+    /**
+     * Creates the AddressBook panel for integration with phoneUtils
+     * This is the main entry point called by phoneUtils
+     */
     public static JPanel createAddressBook() {
-        mainPanel = new JPanel(new BorderLayout());
-        mainPanel.setBackground(phoneUtils.backgroundColor);
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(phoneUtils.backgroundColor);
+        // Initialize the contact manager
+        ContactManager.getInstance();
 
-        // Header Panel with Title and Add Button (iOS style)
-        JPanel headerPanel = new JPanel(new BorderLayout());
-        headerPanel.setBackground(phoneUtils.backgroundColor);
-        headerPanel.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
+        // Create main panel with phone-compatible styling
+        JPanel mainPanel = new JPanel(new BorderLayout());
+        mainPanel.setBackground(backgroundColor);
+        mainPanel.setPreferredSize(new Dimension(360, 580)); // Phone screen minus top/bottom bars
 
-        // Titre
-        JLabel titleLabel = new JLabel("Address Book", SwingConstants.CENTER);
-        titleLabel.setFont(new Font("SF Pro Display", Font.BOLD, 20));
-        titleLabel.setForeground(phoneUtils.textColor);
-        headerPanel.add(titleLabel, BorderLayout.CENTER);
+        // Create the tabbed interface
+        createMainInterface();
 
-        // Bouton Add (+) style iOS
-        JButton addButton = new JButton("+");
-        addButton.setFont(new Font("SF Pro Display", Font.BOLD, 20));
-        addButton.setForeground(new Color(0, 122, 255));  // Couleur bleue iOS
-        addButton.setBackground(phoneUtils.backgroundColor);
-        addButton.setBorderPainted(false);
-        addButton.setFocusPainted(false);
-        addButton.setPreferredSize(new Dimension(40, 30));
-        headerPanel.add(addButton, BorderLayout.EAST);
+        // Add the tabbed pane to main panel
+        mainPanel.add(tabbedPane, BorderLayout.CENTER);
 
-        panel.add(headerPanel, BorderLayout.NORTH);
+        // Load initial data
+        loadInitialData();
 
-        // Chargement de l'icône générique
-        ImageIcon contactIcon = new ImageIcon("src/main/resources/homescreenIcons/addressBookIcon.png");
-        Image img = contactIcon.getImage().getScaledInstance(40, 40, Image.SCALE_SMOOTH);
-        AddressBook.contactIcon = new ImageIcon(img);
+        return mainPanel;
+    }
 
-        // Liste des contacts avec style iOS
-        contactListModel = new DefaultListModel<>();
-        JList<Contact> contactList = new JList<>(contactListModel);
-        contactList.setCellRenderer(new ContactCellRenderer(contactIcon));
+    /**
+     * Create the main tabbed interface adapted for phone screen
+     */
+    private static void createMainInterface() {
+        tabbedPane = new JTabbedPane();
+        tabbedPane.setBackground(backgroundColor);
+        tabbedPane.setForeground(textColor);
+        tabbedPane.setFont(new Font("Inter", Font.PLAIN, 12));
+
+        // Create individual panels
+        createHomePanel();
+        createMapPanel();
+
+        // Add tabs with smaller font for phone
+        tabbedPane.addTab("Home", createHomeIcon(), homePanel, "Application Home");
+        tabbedPane.addTab("Contacts", createContactIcon(), createContactManagementPanel(), "Manage Contacts");
+        tabbedPane.addTab("Map", createMapIcon(), mapPanel, "View Locations");
+    }
+
+    /**
+     * Create the home panel adapted for phone screen
+     */
+    private static void createHomePanel() {
+        homePanel = new JPanel(new BorderLayout());
+        homePanel.setBackground(backgroundColor);
+
+        // Title panel - smaller for phone
+        JPanel titlePanel = new JPanel();
+        titlePanel.setBackground(backgroundColor);
+        JLabel titleLabel = new JLabel("Address Book");
+        titleLabel.setFont(new Font("Inter", Font.BOLD, 18));
+        titleLabel.setForeground(textColor);
+        titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        titlePanel.add(titleLabel);
+
+        // Statistics panel - simplified for phone
+        JPanel statsPanel = createStatsPanel();
+
+        // Quick actions panel - simplified for phone
+        JPanel actionsPanel = createQuickActionsPanel();
+
+        homePanel.add(titlePanel, BorderLayout.NORTH);
+        homePanel.add(statsPanel, BorderLayout.CENTER);
+        homePanel.add(actionsPanel, BorderLayout.SOUTH);
+    }
+
+    /**
+     * Create statistics panel adapted for phone screen
+     */
+    private static JPanel createStatsPanel() {
+        JPanel statsPanel = new JPanel(new GridLayout(2, 2, 10, 10));
+        statsPanel.setBorder(BorderFactory.createEmptyBorder(20, 15, 20, 15));
+        statsPanel.setBackground(backgroundColor);
+
+        // Total contacts
+        JPanel totalContactsCard = createStatsCard("Contacts",
+                String.valueOf(ContactManager.getContactsCount()), new Color(0, 122, 255));
+
+        // Contacts with photos
+        JPanel photosCard = createStatsCard("Photos", "0", new Color(52, 199, 89));
+
+        // Contacts with addresses
+        long addressCount = ContactManager.getContacts().stream()
+                .mapToLong(c -> c.getAddress().isEmpty() ? 0 : 1).sum();
+        JPanel addressCard = createStatsCard("Addresses",
+                String.valueOf(addressCount), new Color(255, 149, 0));
+
+        // Recent activity
+        JPanel recentCard = createStatsCard("Recent", "Today", new Color(175, 82, 222));
+
+        statsPanel.add(totalContactsCard);
+        statsPanel.add(photosCard);
+        statsPanel.add(addressCard);
+        statsPanel.add(recentCard);
+
+        return statsPanel;
+    }
+
+    /**
+     * Create a statistics card adapted for phone screen
+     */
+    private static JPanel createStatsCard(String title, String value, Color color) {
+        JPanel card = new JPanel(new BorderLayout());
+        card.setBackground(cardColor);
+        card.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(58, 58, 60), 1),
+                BorderFactory.createEmptyBorder(10, 10, 10, 10)
+        ));
+
+        JLabel titleLabel = new JLabel(title);
+        titleLabel.setFont(new Font("Inter", Font.PLAIN, 10));
+        titleLabel.setForeground(new Color(174, 174, 178));
+        titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
+
+        JLabel valueLabel = new JLabel(value);
+        valueLabel.setFont(new Font("Inter", Font.BOLD, 16));
+        valueLabel.setForeground(color);
+        valueLabel.setHorizontalAlignment(SwingConstants.CENTER);
+
+        card.add(titleLabel, BorderLayout.NORTH);
+        card.add(valueLabel, BorderLayout.CENTER);
+
+        return card;
+    }
+
+    /**
+     * Create quick actions panel adapted for phone screen
+     */
+    private static JPanel createQuickActionsPanel() {
+        JPanel actionsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 5));
+        actionsPanel.setBackground(backgroundColor);
+        actionsPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        JButton addContactBtn = createActionButton("Add", new Color(0, 122, 255));
+        JButton viewMapBtn = createActionButton("Map", new Color(255, 149, 0));
+
+        addContactBtn.addActionListener(e -> showAddContactDialog());
+        viewMapBtn.addActionListener(e -> tabbedPane.setSelectedIndex(2));
+
+        actionsPanel.add(addContactBtn);
+        actionsPanel.add(viewMapBtn);
+
+        return actionsPanel;
+    }
+
+    /**
+     * Create action button adapted for phone screen
+     */
+    private static JButton createActionButton(String text, Color color) {
+        JButton button = new JButton(text);
+        button.setFont(new Font("Inter", Font.PLAIN, 12));
+        button.setForeground(Color.WHITE);
+        button.setBackground(color);
+        button.setBorder(BorderFactory.createEmptyBorder(8, 16, 8, 16));
+        button.setFocusPainted(false);
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        return button;
+    }
+
+    /**
+     * Create the contact management panel adapted for phone screen
+     */
+    private static JPanel createContactManagementPanel() {
+        JPanel mainPanel = new JPanel(new BorderLayout(5, 5));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        mainPanel.setBackground(backgroundColor);
+
+        // Initialize contact list
+        listModel = new DefaultListModel<>();
+        contactList = new JList<>(listModel);
+        contactList.setCellRenderer(new ContactCellRenderer());
         contactList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        contactList.setFixedCellHeight(65);  // Cellules plus hautes style iOS
+        contactList.setBackground(cardColor);
+        contactList.setForeground(textColor);
 
-        // Style iOS de la liste
-        JScrollPane scrollPane = new JScrollPane(contactList);
-        scrollPane.setBorder(BorderFactory.createEmptyBorder());
-        scrollPane.getViewport().setBackground(phoneUtils.backgroundColor);
-        panel.add(scrollPane, BorderLayout.CENTER);
+        // Contact list panel - full width for phone
+        JPanel listPanel = new JPanel(new BorderLayout());
+        listPanel.setBackground(backgroundColor);
 
-        // Panel pour la recherche style iOS
-        JPanel searchPanel = new JPanel(new BorderLayout());
-        searchPanel.setBackground(phoneUtils.backgroundColor);
-        searchPanel.setBorder(BorderFactory.createEmptyBorder(0, 15, 10, 15));
+        // Search panel
+        JPanel searchPanel = new JPanel(new BorderLayout(5, 5));
+        searchPanel.setBackground(backgroundColor);
+        JTextField searchField = new JTextField();
+        searchField.setFont(new Font("Inter", Font.PLAIN, 12));
+        searchField.setBackground(cardColor);
+        searchField.setForeground(textColor);
+        searchField.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
 
-        JTextField searchField = new JTextField("Search");
-        searchField.setFont(new Font("SF Pro Text", Font.PLAIN, 14));
-        searchField.setForeground(Color.GRAY);
-        searchField.setBackground(new Color(230, 230, 230));  // Gris clair iOS
-        searchField.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(230, 230, 230), 1, true),
-                BorderFactory.createEmptyBorder(8, 10, 8, 10)));
+        JLabel searchLabel = new JLabel("Search:");
+        searchLabel.setForeground(textColor);
+        searchLabel.setFont(new Font("Inter", Font.PLAIN, 12));
 
-        // Focus listener pour effacer "Search" quand le champ est sélectionné
-        searchField.addFocusListener(new FocusAdapter() {
-            @Override
-            public void focusGained(FocusEvent e) {
-                if (searchField.getText().equals("Search")) {
-                    searchField.setText("");
-                    searchField.setForeground(Color.BLACK);
-                }
-            }
-
-            @Override
-            public void focusLost(FocusEvent e) {
-                if (searchField.getText().isEmpty()) {
-                    searchField.setText("Search");
-                    searchField.setForeground(Color.GRAY);
-                }
-            }
-        });
-
+        searchPanel.add(searchLabel, BorderLayout.WEST);
         searchPanel.add(searchField, BorderLayout.CENTER);
-        panel.add(searchPanel, BorderLayout.SOUTH);
 
-        // Actions pour la liste de contacts
+        listPanel.add(searchPanel, BorderLayout.NORTH);
 
-        // Double-clic pour modifier un contact (style iOS)
-        contactList.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                if (e.getClickCount() == 2) {
-                    int index = contactList.locationToIndex(e.getPoint());
-                    if (index != -1) {
-                        Contact selectedContact = contactListModel.getElementAt(index);
-                        openEditContactWindow(selectedContact, contactList);
-                    }
-                }
-            }
-        });
+        JScrollPane listScrollPane = new JScrollPane(contactList);
+        listScrollPane.setPreferredSize(new Dimension(350, 200));
+        listScrollPane.getViewport().setBackground(cardColor);
+        listPanel.add(listScrollPane, BorderLayout.CENTER);
 
-        // Synchroniser la liste avec ContactManager
+        // Contact details panel
+        contactDetailsPanel = new JPanel();
+        contactDetailsPanel.setLayout(new BoxLayout(contactDetailsPanel, BoxLayout.Y_AXIS));
+        contactDetailsPanel.setBackground(backgroundColor);
+
+        JScrollPane detailsScrollPane = new JScrollPane(contactDetailsPanel);
+        detailsScrollPane.setPreferredSize(new Dimension(350, 200));
+        detailsScrollPane.getViewport().setBackground(backgroundColor);
+
+        // Buttons panel - smaller buttons for phone
+        JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 3, 3));
+        buttonsPanel.setBackground(backgroundColor);
+
+        JButton saveBtn = createSmallButton("Save");
+        JButton deleteBtn = createSmallButton("Delete");
+        JButton addPhotoBtn = createSmallButton("Photo");
+        JButton showMapBtn = createSmallButton("Map");
+
+        buttonsPanel.add(saveBtn);
+        buttonsPanel.add(deleteBtn);
+        buttonsPanel.add(addPhotoBtn);
+        buttonsPanel.add(showMapBtn);
+
+        // Layout for phone - vertical stack
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.setBackground(backgroundColor);
+        topPanel.add(listPanel, BorderLayout.NORTH);
+        topPanel.add(detailsScrollPane, BorderLayout.CENTER);
+
+        mainPanel.add(topPanel, BorderLayout.CENTER);
+        mainPanel.add(buttonsPanel, BorderLayout.SOUTH);
+
+        // Setup contact list event handlers
+        setupContactListHandlers(saveBtn, deleteBtn, addPhotoBtn, showMapBtn, searchField);
+
+        return mainPanel;
+    }
+
+    /**
+     * Create small button for phone interface
+     */
+    private static JButton createSmallButton(String text) {
+        JButton button = new JButton(text);
+        button.setFont(new Font("Inter", Font.PLAIN, 10));
+        button.setForeground(Color.WHITE);
+        button.setBackground(new Color(0, 122, 255));
+        button.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        button.setFocusPainted(false);
+        return button;
+    }
+
+    /**
+     * Setup event handlers for contact management
+     */
+    private static void setupContactListHandlers(JButton saveBtn, JButton deleteBtn,
+                                                 JButton addPhotoBtn, JButton showMapBtn,
+                                                 JTextField searchField) {
+
+        // Contact selection handler
         contactList.addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
-                int index = contactList.getSelectedIndex();
-                if (index != -1) {
-                    Contact selectedContact = contactListModel.getElementAt(index);
-                    ContactManager.updateContact(index, selectedContact);
-                }
+                selectedContact = contactList.getSelectedValue();
+                updateContactDetails(selectedContact);
+                boolean hasSelection = selectedContact != null;
+                saveBtn.setEnabled(hasSelection);
+                deleteBtn.setEnabled(hasSelection);
+                addPhotoBtn.setEnabled(hasSelection);
+                showMapBtn.setEnabled(hasSelection && !selectedContact.getAddress().isEmpty());
             }
         });
 
-        // Menu contextuel style iOS avec swipe et longpress
-        contactList.addMouseListener(new MouseAdapter() {
-            private Point pressPoint;
-            private Timer longPressTimer;
+        // Search functionality
+        searchField.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            public void changedUpdate(javax.swing.event.DocumentEvent e) { search(); }
+            public void removeUpdate(javax.swing.event.DocumentEvent e) { search(); }
+            public void insertUpdate(javax.swing.event.DocumentEvent e) { search(); }
 
-            @Override
-            public void mousePressed(MouseEvent e) {
-                pressPoint = e.getPoint();
+            private void search() {
+                String query = searchField.getText();
+                java.util.List<Contact> results = ContactManager.searchContacts(query);
+                updateContactList(results);
+            }
+        });
 
-                // Configurer timer pour longpress
-                longPressTimer = new Timer(600, _ -> {
-                    int index = contactList.locationToIndex(pressPoint);
-                    if (index != -1) {
-                        Contact selectedContact = contactListModel.getElementAt(index);
-                        showContextMenu(selectedContact, contactList, e.getPoint());
+        // Button handlers
+        saveBtn.addActionListener(e -> saveCurrentContact());
+        deleteBtn.addActionListener(e -> deleteCurrentContact());
+        addPhotoBtn.addActionListener(e -> addPhotoToContact());
+        showMapBtn.addActionListener(e -> showContactOnMap());
+    }
+
+    /**
+     * Create the map panel
+     */
+    private static void createMapPanel() {
+        mapPanel = new MapPanel();
+        mapPanel.setBackground(backgroundColor);
+    }
+
+    /**
+     * Load initial data
+     */
+    private static void loadInitialData() {
+        updateContactList(ContactManager.getContacts());
+    }
+
+    /**
+     * Update the contact list display
+     */
+    public static void updateContactList(java.util.List<Contact> contacts) {
+        listModel.clear();
+        contacts.forEach(listModel::addElement);
+    }
+
+    /**
+     * Update contact details panel
+     */
+    private static void updateContactDetails(Contact contact) {
+        contactDetailsPanel.removeAll();
+
+        if (contact == null) {
+            JLabel noSelectionLabel = new JLabel("Select a contact");
+            noSelectionLabel.setForeground(textColor);
+            noSelectionLabel.setFont(new Font("Inter", Font.PLAIN, 12));
+            contactDetailsPanel.add(noSelectionLabel);
+        } else {
+            addContactField("First Name:", contact.getFirstName());
+            addContactField("Last Name:", contact.getLastName());
+            addContactField("Phone:", contact.getPhone());
+            addContactField("Email:", contact.getEmail());
+            addContactField("Address:", contact.getAddress());
+            addContactField("Birth Date:", contact.getBirthDate());
+        }
+
+        contactDetailsPanel.revalidate();
+        contactDetailsPanel.repaint();
+    }
+
+    /**
+     * Add a contact field to the details panel
+     */
+    private static void addContactField(String label, String value) {
+        JPanel fieldPanel = new JPanel(new BorderLayout(5, 5));
+        fieldPanel.setBorder(BorderFactory.createEmptyBorder(3, 5, 3, 5));
+        fieldPanel.setBackground(backgroundColor);
+
+        JLabel fieldLabel = new JLabel(label);
+        fieldLabel.setPreferredSize(new Dimension(80, 20));
+        fieldLabel.setFont(new Font("Inter", Font.PLAIN, 10));
+        fieldLabel.setForeground(textColor);
+
+        JTextField fieldValue = new JTextField(value);
+        fieldValue.setFont(new Font("Inter", Font.PLAIN, 10));
+        fieldValue.setBackground(cardColor);
+        fieldValue.setForeground(textColor);
+        fieldValue.setBorder(BorderFactory.createEmptyBorder(2, 5, 2, 5));
+
+        fieldPanel.add(fieldLabel, BorderLayout.WEST);
+        fieldPanel.add(fieldValue, BorderLayout.CENTER);
+
+        contactDetailsPanel.add(fieldPanel);
+    }
+
+    // Les autres méthodes restent similaires mais adaptées pour les composants statiques
+    private static void saveCurrentContact() {
+        if (selectedContact == null) return;
+
+        try {
+            Contact updatedContact = createUpdatedContactFromForm();
+            int index = ContactManager.getContactIndex(selectedContact);
+
+            if (ContactManager.updateContact(index, updatedContact)) {
+                updateContactList(ContactManager.getContacts());
+                JOptionPane.showMessageDialog(null, "Contact saved successfully!");
+                refreshHomeStats();
+            } else {
+                JOptionPane.showMessageDialog(null, "Error saving contact!", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, "Error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private static Contact createUpdatedContactFromForm() {
+        Component[] components = contactDetailsPanel.getComponents();
+        String firstName = getFieldValue(components, 0);
+        String lastName = getFieldValue(components, 1);
+        String phone = getFieldValue(components, 2);
+        String email = getFieldValue(components, 3);
+        String address = getFieldValue(components, 4);
+        String birthDate = getFieldValue(components, 5);
+
+        return new Contact(firstName + " " + lastName, phone, firstName, lastName,
+                birthDate, address, email, selectedContact.getPhoto());
+    }
+
+    private static String getFieldValue(Component[] components, int fieldIndex) {
+        if (fieldIndex < components.length) {
+            JPanel fieldPanel = (JPanel) components[fieldIndex];
+            JTextField textField = (JTextField) fieldPanel.getComponent(1);
+            return textField.getText();
+        }
+        return "";
+    }
+
+    private static void deleteCurrentContact() {
+        if (selectedContact == null) return;
+
+        int result = JOptionPane.showConfirmDialog(null,
+                "Are you sure you want to delete this contact?",
+                "Confirm Delete", JOptionPane.YES_NO_OPTION);
+
+        if (result == JOptionPane.YES_OPTION) {
+            if (ContactManager.deleteContact(selectedContact)) {
+                updateContactList(ContactManager.getContacts());
+                contactDetailsPanel.removeAll();
+                JLabel deletedLabel = new JLabel("Contact deleted");
+                deletedLabel.setForeground(textColor);
+                contactDetailsPanel.add(deletedLabel);
+                contactDetailsPanel.revalidate();
+                contactDetailsPanel.repaint();
+                refreshHomeStats();
+                JOptionPane.showMessageDialog(null, "Contact deleted successfully!");
+            }
+        }
+    }
+
+    private static void addPhotoToContact() {
+        if (selectedContact == null) return;
+        // Implementation depends on your GalleryFrame class
+        JOptionPane.showMessageDialog(null, "Photo feature - to be implemented");
+    }
+
+    private static void showContactOnMap() {
+        if (selectedContact == null || selectedContact.getAddress().isEmpty()) return;
+
+        mapPanel.showAddressOnMap(selectedContact.getAddress());
+        tabbedPane.setSelectedIndex(2); // Switch to map tab
+    }
+
+    private static void showAddContactDialog() {
+        // Créer un nouveau panel pour l'onglet d'ajout
+        JPanel addContactPanel = new JPanel(new BorderLayout());
+        addContactPanel.setBackground(backgroundColor);
+
+        // Créer et configurer le dialogue d'ajout
+        AddContactDialog dialog = new AddContactDialog(null);
+        dialog.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        dialog.setSize(400, 500);
+        dialog.setLocationRelativeTo(null);
+        dialog.setVisible(true);
+
+        // Ajouter le dialogue au panel
+        addContactPanel.add(dialog, BorderLayout.CENTER);
+
+        // Ajouter l'onglet
+        int index = tabbedPane.getTabCount();
+        tabbedPane.addTab("Add Contact", createContactIcon(), addContactPanel, "Add a new contact");
+        tabbedPane.setSelectedIndex(index);
+
+        // Gérer la fermeture du dialogue
+        dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+            public void windowClosing(java.awt.event.WindowEvent e) {
+                // Supprimer l'onglet lors de la fermeture
+                tabbedPane.removeTabAt(index);
+                
+                // Si un contact a été créé, le sauvegarder
+                if (dialog.getContact() != null) {
+                    Contact newContact = dialog.getContact();
+                    if (ContactManager.addContact(newContact)) {
+                        updateContactList(ContactManager.getContacts());
+                        JOptionPane.showMessageDialog(null, "Contact added successfully!");
+                        refreshHomeStats();
+                    } else {
+                        JOptionPane.showMessageDialog(null, "Error adding contact!", "Error", JOptionPane.ERROR_MESSAGE);
                     }
-                });
-                longPressTimer.setRepeats(false);
-                longPressTimer.start();
-            }
-
-            @Override
-            public void mouseReleased(MouseEvent e) {
-                if (longPressTimer != null) {
-                    longPressTimer.stop();
                 }
             }
         });
-
-        // Action pour le bouton d'ajout
-        addButton.addActionListener(e -> {
-            openAddContactWindow();
-            // Sauvegarder après l'ajout
-            ContactManager.saveContacts();
-        });
-
-        // Charger les contacts depuis le fichier JSON
-        ContactManager.loadContacts();
-
-        for (Contact c: ContactManager.getContacts()) {
-            Contact newContact = new Contact(
-                    c.getName(),
-                    c.getPhone(),
-                    c.getFirstName(),
-                    c.getLastName(),
-                    c.getBirthDate(),
-                    c.getAddress(),
-                    c.getEmail(),
-                    c.getPhoto()
-            );
-            contactListModel.addElement(newContact);
-        }
-        return panel;
     }
 
-    // Méthodes d'interface utilisateur style iOS
-
-    // Ouvrir la fenêtre d'ajout de contact
-    private static void openAddContactWindow() {
-        // Créer une nouvelle fenêtre pour l'ajout de contact
-        JFrame addContactFrame = new JFrame("New Contact");
-        addContactFrame.setSize(400, 700);
-        addContactFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        addContactFrame.setLocationRelativeTo(mainPanel);
-
-        JPanel contentPanel = new JPanel(new BorderLayout());
-        contentPanel.setBackground(phoneUtils.backgroundColor);
-
-        // En-tête avec boutons Annuler et Créer
-        JPanel headerPanel = new JPanel(new BorderLayout());
-        headerPanel.setBackground(phoneUtils.backgroundColor);
-        headerPanel.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
-
-        JButton cancelButton = new JButton("Cancel");
-        cancelButton.setFont(new Font("SF Pro Text", Font.PLAIN, 16));
-        cancelButton.setForeground(new Color(0, 122, 255));
-        cancelButton.setBackground(phoneUtils.backgroundColor);
-        cancelButton.setBorderPainted(false);
-        cancelButton.setFocusPainted(false);
-        headerPanel.add(cancelButton, BorderLayout.WEST);
-
-        JLabel titleLabel = new JLabel("New Contact", SwingConstants.CENTER);
-        titleLabel.setFont(new Font("SF Pro Display", Font.BOLD, 18));
-        titleLabel.setForeground(phoneUtils.textColor);
-        headerPanel.add(titleLabel, BorderLayout.CENTER);
-
-        JButton createButton = new JButton("Done");
-        createButton.setFont(new Font("SF Pro Text", Font.BOLD, 16));
-        createButton.setForeground(new Color(0, 122, 255));
-        createButton.setBackground(phoneUtils.backgroundColor);
-        createButton.setBorderPainted(false);
-        createButton.setFocusPainted(false);
-        headerPanel.add(createButton, BorderLayout.EAST);
-
-        contentPanel.add(headerPanel, BorderLayout.NORTH);
-
-        // Champs de formulaire
-        JPanel formPanel = new JPanel() {
-            @Override
-            public Dimension getPreferredSize() {
-                return new Dimension(300, 700);
-            }
-        };
-        formPanel.setLayout(new BoxLayout(formPanel, BoxLayout.Y_AXIS));
-        formPanel.setBackground(phoneUtils.backgroundColor);
-        formPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-
-        // Panel de défilement pour les champs
-        JScrollPane scrollPane = new JScrollPane(formPanel);
-        scrollPane.setBorder(BorderFactory.createEmptyBorder());
-        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
-        contentPanel.add(scrollPane, BorderLayout.CENTER);
-
-        // Photo/image
-        JPanel photoPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        photoPanel.setBackground(phoneUtils.backgroundColor);
-
-        // Image par défaut avec taille plus grande (style iOS)
-        ImageIcon defaultIcon = new ImageIcon("src/main/resources/homescreenIcons/contactDefault.png");
-        Image scaledImg = defaultIcon.getImage().getScaledInstance(80, 80, Image.SCALE_SMOOTH);
-        ImageIcon scaledIcon = new ImageIcon(scaledImg);
-
-        JLabel photoLabel = new JLabel(scaledIcon);
-        photoLabel.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 1, true));
-        photoPanel.add(photoLabel);
-
-        // Panel séparé pour le bouton "add photo"
-        JPanel addPhotoPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        addPhotoPanel.setBackground(phoneUtils.backgroundColor);
-        JButton addPhotoButton = new JButton("add photo");
-        addPhotoButton.setFont(new Font("SF Pro Text", Font.PLAIN, 14));
-        addPhotoButton.setForeground(new Color(0, 122, 255));
-        addPhotoButton.setBackground(phoneUtils.backgroundColor);
-        addPhotoButton.setBorderPainted(false);
-        addPhotoButton.setFocusPainted(false);
-        addPhotoPanel.add(addPhotoButton);
-
-        formPanel.add(photoPanel);
-        formPanel.add(addPhotoPanel);
-        formPanel.add(Box.createVerticalStrut(20));
-
-        // Champ prénom
-        JPanel firstNamePanel = createFormField("First Name");
-        JTextField firstNameField = (JTextField) firstNamePanel.getComponent(1);
-        formPanel.add(firstNamePanel);
-        formPanel.add(Box.createVerticalStrut(1));
-
-        // Champ nom
-        JPanel lastNamePanel = createFormField("Last Name");
-        JTextField lastNameField = (JTextField) lastNamePanel.getComponent(1);
-        formPanel.add(lastNamePanel);
-        formPanel.add(Box.createVerticalStrut(1));
-
-        // Champ téléphone
-        JPanel phonePanel = createFormField("Phone");
-        JTextField phoneField = (JTextField) phonePanel.getComponent(1);
-        formPanel.add(phonePanel);
-        formPanel.add(Box.createVerticalStrut(1));
-
-        // Champ email
-        JPanel emailPanel = createFormField("Email");
-        JTextField emailField = (JTextField) emailPanel.getComponent(1);
-        formPanel.add(emailPanel);
-        formPanel.add(Box.createVerticalStrut(1));
-
-        // Champ date de naissance
-        JPanel birthDatePanel = createFormField("Birth Date (DD/MM/YYYY)");
-        JTextField birthDateField = (JTextField) birthDatePanel.getComponent(1);
-        try {
-            MaskFormatter dateMask = new MaskFormatter("##/##/####");
-            dateMask.setPlaceholderCharacter('_');
-            JFormattedTextField formattedBirthDateField = new JFormattedTextField(dateMask);
-            formattedBirthDateField.setFont(new Font("SF Pro Text", Font.PLAIN, 16));
-            formattedBirthDateField.setBorder(null);
-            birthDatePanel.remove(birthDateField);
-            birthDatePanel.add(formattedBirthDateField, BorderLayout.CENTER);
-            birthDateField = formattedBirthDateField;
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(null, "Erreur lors de la saisie de la date de naissance.", "Erreur", JOptionPane.ERROR_MESSAGE);
+    public static void refreshHomeStats() {
+        createHomePanel();
+        if (tabbedPane.getTabCount() > 0) {
+            tabbedPane.setComponentAt(0, homePanel);
         }
-        formPanel.add(birthDatePanel);
-        formPanel.add(Box.createVerticalStrut(1));
-
-        // Champ adresse
-        JPanel addressPanel = createFormField("Address");
-        JTextField addressField = (JTextField) addressPanel.getComponent(1);
-        formPanel.add(addressPanel);
-
-        // Actions des boutons
-        cancelButton.addActionListener(_ -> addContactFrame.dispose());
-
-        // Action pour le bouton "add photo" (simulation)
-        addPhotoButton.addActionListener(_ -> JOptionPane.showMessageDialog(addContactFrame, "Photo selection dialog would appear here.",
-                "Select Photo", JOptionPane.INFORMATION_MESSAGE));
-
-        JTextField finalBirthDateField = birthDateField;
-        createButton.addActionListener(_ -> {
-            String firstName = firstNameField.getText().trim();
-            String lastName = lastNameField.getText().trim();
-            String fullName = firstName + " " + lastName;
-            String phone = phoneField.getText().trim();
-            String email = emailField.getText().trim();
-            String birthDate = finalBirthDateField.getText().trim();
-            String address = addressField.getText().trim();
-
-            if (!firstName.isEmpty() && !lastName.isEmpty()) {
-                Contact newContact = new Contact(fullName, phone, firstName, lastName, birthDate, address, email, null);
-                ContactManager.addContact(newContact);
-                contactListModel.addElement(newContact);
-                addContactFrame.dispose();
-            } else {
-                JPanel errorPanel = firstName.isEmpty() ? firstNamePanel : lastNamePanel;
-                shakeComponent(errorPanel);
-                JOptionPane.showMessageDialog(addContactFrame, "First name and last name are required.",
-                        "Required Fields", JOptionPane.WARNING_MESSAGE);
-            }
-        });
-
-        addContactFrame.setContentPane(contentPanel);
-        addContactFrame.setVisible(true);
     }
 
-    // Ouvrir la fenêtre de modification d'un contact
-    private static void openEditContactWindow(Contact contact, JList<Contact> contactList) {
-
-        JFrame editContactFrame = new JFrame("Edit Contact");
-        editContactFrame.setSize(400, 700);
-        editContactFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        editContactFrame.setLocationRelativeTo(mainPanel);
-
-        JPanel contentPanel = new JPanel(new BorderLayout());
-        contentPanel.setBackground(phoneUtils.backgroundColor);
-
-        // En-tête avec boutons Annuler et Sauvegarder
-        JPanel headerPanel = new JPanel(new BorderLayout());
-        headerPanel.setBackground(phoneUtils.backgroundColor);
-        headerPanel.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
-
-        JButton cancelButton = new JButton("Cancel");
-        cancelButton.setFont(new Font("SF Pro Text", Font.PLAIN, 16));
-        cancelButton.setForeground(new Color(0, 122, 255));
-        cancelButton.setBackground(phoneUtils.backgroundColor);
-        cancelButton.setBorderPainted(false);
-        cancelButton.setFocusPainted(false);
-        headerPanel.add(cancelButton, BorderLayout.WEST);
-
-        JLabel titleLabel = new JLabel("Edit Contact", SwingConstants.CENTER);
-        titleLabel.setFont(new Font("SF Pro Display", Font.BOLD, 18));
-        titleLabel.setForeground(phoneUtils.textColor);
-        headerPanel.add(titleLabel, BorderLayout.CENTER);
-
-        JButton saveButton = new JButton("Done");
-        saveButton.setFont(new Font("SF Pro Text", Font.BOLD, 16));
-        saveButton.setForeground(new Color(0, 122, 255));
-        saveButton.setBackground(phoneUtils.backgroundColor);
-        saveButton.setBorderPainted(false);
-        saveButton.setFocusPainted(false);
-        headerPanel.add(saveButton, BorderLayout.EAST);
-
-        // Champs de formulaire
-        JPanel formPanel = new JPanel() {
-            @Override
-            public Dimension getPreferredSize() {
-                return new Dimension(300, 700); // Taille pour accommoder tous les champs
-            }
-        };
-        formPanel.setLayout(new BoxLayout(formPanel, BoxLayout.Y_AXIS));
-        formPanel.setBackground(phoneUtils.backgroundColor);
-        formPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-
-        // Panel de défilement pour les champs
-        JScrollPane scrollPane = new JScrollPane(formPanel);
-        scrollPane.setBorder(BorderFactory.createEmptyBorder());
-        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
-        editContactFrame.add(scrollPane, BorderLayout.CENTER);
-        JButton Loc = new JButton("Localisation");
-        Loc.setFont(new Font("SF Pro Text", Font.PLAIN, 14));
-        Loc.setForeground(new Color(0, 122, 255));
-        Loc.setBackground(phoneUtils.backgroundColor);
-        Loc.setBorderPainted(false);
-        Loc.setFocusPainted(false);
-        Loc.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        formPanel.add(Loc);
-
-        Loc.addActionListener(_ -> {
-            JDialog mapDialog = new JDialog((Frame) null, "Localisation", true);
-            mapDialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-            mapDialog.setSize(600, 400); // Taille de la fenêtre
-            mapDialog.setLocationRelativeTo(null);
-
-            MapPanel mapPanel = new MapPanel();
-            mapPanel.showAddressOnMap(contact.getAddress());
-
-            // Rendre la carte navigable
-            PanMouseInputListener pan = new PanMouseInputListener(mapPanel.getMapViewer());
-            mapPanel.getMapViewer().addMouseListener(pan);
-            mapPanel.getMapViewer().addMouseMotionListener(pan);
-            mapPanel.getMapViewer().addMouseWheelListener(new ZoomMouseWheelListenerCenter(mapPanel.getMapViewer()));
-
-            mapDialog.add(mapPanel);
-            mapDialog.setVisible(true);
-        });
-
-        // Photo/image
-        JPanel photoPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        photoPanel.setBackground(phoneUtils.backgroundColor);
-
-        // Image par défaut avec taille plus grande (style iOS)
-        ImageIcon defaultIcon = new ImageIcon("src/main/resources/homescreenIcons/contactDefault.png");
-        Image scaledImg = defaultIcon.getImage().getScaledInstance(80, 80, Image.SCALE_SMOOTH);
-        ImageIcon scaledIcon = new ImageIcon(scaledImg);
-
-        JLabel photoLabel = new JLabel(scaledIcon);
-        photoLabel.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 1, true));
-        photoPanel.add(photoLabel);
-
-        // Panel séparé pour le bouton "add photo"
-        JPanel addPhotoPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        addPhotoPanel.setBackground(phoneUtils.backgroundColor);
-        JButton changePhotoButton = new JButton("change photo");
-        changePhotoButton.setFont(new Font("SF Pro Text", Font.PLAIN, 14));
-        changePhotoButton.setForeground(new Color(0, 122, 255));
-        changePhotoButton.setBackground(phoneUtils.backgroundColor);
-        changePhotoButton.setBorderPainted(false);
-        changePhotoButton.setFocusPainted(false);
-        changePhotoButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        addPhotoPanel.add(changePhotoButton);
-
-        formPanel.add(photoPanel);
-        formPanel.add(addPhotoPanel);
-        formPanel.add(Box.createVerticalStrut(20));
-
-        // Extraire le prénom et le nom de la personne
-        String firstName = contact.getFirstName();
-        String lastName = contact.getLastName();
-
-// Correction : gérer le cas où firstName ou lastName est null
-        if ((firstName == null || firstName.isEmpty()) && (lastName == null || lastName.isEmpty()) && contact.getName() != null && contact.getName().contains(" ")) {
-            String[] nameParts = contact.getName().split(" ", 2);
-            firstName = nameParts[0];
-            lastName = nameParts.length > 1 ? nameParts[1] : "";
-        }
-        if (firstName == null) firstName = "";
-        if (lastName == null) lastName = "";
-        if (contact.getName() == null) contact.setName("");
-        if (contact.getPhone() == null) contact.setPhone("");
-        if (contact.getEmail() == null) contact.setEmail("");
-        if (contact.getBirthDate() == null) contact.setBirthDate("");
-        if (contact.getAddress() == null) contact.setAddress("");
-
-        // Si les champs sont vides (pour la compatibilité avec les anciens contacts)
-        if (firstName.isEmpty() && lastName.isEmpty() && contact.getName().contains(" ")) {
-            String[] nameParts = contact.getName().split(" ", 2);
-            firstName = nameParts[0];
-            lastName = nameParts.length > 1 ? nameParts[1] : "";
-        }
-
-        // Champ prénom
-        JPanel firstNamePanel = createFormField("First Name");
-        JTextField firstNameField = (JTextField) firstNamePanel.getComponent(1);
-        firstNameField.setText(firstName);
-        formPanel.add(firstNamePanel);
-        formPanel.add(Box.createVerticalStrut(1));
-
-        // Champ nom
-        JPanel lastNamePanel = createFormField("Last Name");
-        JTextField lastNameField = (JTextField) lastNamePanel.getComponent(1);
-        lastNameField.setText(lastName);
-        formPanel.add(lastNamePanel);
-        formPanel.add(Box.createVerticalStrut(1));
-
-        // Champ téléphone
-        JPanel phonePanel = createFormField("Phone");
-        JTextField phoneField = (JTextField) phonePanel.getComponent(1);
-        phoneField.setText(contact.getPhone());
-        formPanel.add(phonePanel);
-        formPanel.add(Box.createVerticalStrut(1));
-
-        // Champ email
-        JPanel emailPanel = createFormField("Email");
-        JTextField emailField = (JTextField) emailPanel.getComponent(1);
-        emailField.setText(contact.getEmail());
-        formPanel.add(emailPanel);
-        formPanel.add(Box.createVerticalStrut(1));
-
-        // Champ date de naissance
-        JPanel birthDatePanel = createFormField("Birth Date (DD/MM/YYYY)");
-        JTextField birthDateField = (JTextField) birthDatePanel.getComponent(1);
-        // Formatter pour la date
-        try {
-            MaskFormatter dateMask = new MaskFormatter("##/##/####");
-            dateMask.setPlaceholderCharacter('_');
-            JFormattedTextField formattedBirthDateField = new JFormattedTextField(dateMask);
-            formattedBirthDateField.setFont(new Font("SF Pro Text", Font.PLAIN, 16));
-            formattedBirthDateField.setBorder(null);
-            formattedBirthDateField.setValue(contact.getBirthDate().isEmpty() ? "  /  /    " : contact.getBirthDate());
-            birthDatePanel.remove(birthDateField);
-            birthDatePanel.add(formattedBirthDateField, BorderLayout.CENTER);
-            birthDateField = formattedBirthDateField;
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(null, "Erreur lors de la saisie de la date de naissance.", "Erreur", JOptionPane.ERROR_MESSAGE);
-        }
-        formPanel.add(birthDatePanel);
-        formPanel.add(Box.createVerticalStrut(1));
-
-        // Champ adresse
-        JPanel addressPanel = createFormField("Address");
-        JTextField addressField = (JTextField) addressPanel.getComponent(1);
-        addressField.setText(contact.getAddress());
-        formPanel.add(addressPanel);
-
-        // Bouton Supprimer en bas (rouge)
-        JPanel deletePanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        deletePanel.setBackground(phoneUtils.backgroundColor);
-        deletePanel.setBorder(BorderFactory.createEmptyBorder(30, 0, 0, 0));
-
-        JButton deleteButton = new JButton("Delete Contact");
-        deleteButton.setFont(new Font("SF Pro Text", Font.BOLD, 16));
-        deleteButton.setForeground(Color.RED);
-        deleteButton.setBackground(new Color(240, 240, 240));
-        deleteButton.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(200, 200, 200), 1, true),
-                BorderFactory.createEmptyBorder(10, 20, 10, 20)));
-        deletePanel.add(deleteButton);
-        formPanel.add(deletePanel);
-
-        // Actions des boutons
-        cancelButton.addActionListener(_ -> editContactFrame.dispose());
-
-        // Action pour le bouton "change photo" (simulation)
-        changePhotoButton.addActionListener(_ -> JOptionPane.showMessageDialog(editContactFrame, "Photo selection dialog would appear here.",
-                "Change Photo", JOptionPane.INFORMATION_MESSAGE));
-
-        JTextField finalBirthDateField = birthDateField;
-        saveButton.addActionListener(_ -> {
-            String newFirstName = firstNameField.getText().trim();
-            String newLastName = lastNameField.getText().trim();
-            String newFullName = newFirstName + " " + newLastName;
-            String newPhone = phoneField.getText().trim();
-            String newEmail = emailField.getText().trim();
-            String newBirthDate = finalBirthDateField.getText().trim();
-            String newAddress = addressField.getText().trim();
-
-            if (!newFirstName.isEmpty() && !newLastName.isEmpty()) {
-                contact.setName(newFullName);
-                contact.setFirstName(newFirstName);
-                contact.setLastName(newLastName);
-                contact.setPhone(newPhone);
-                contact.setEmail(newEmail);
-                contact.setBirthDate(newBirthDate);
-                contact.setAddress(newAddress);
-                contactList.repaint();
-
-            } else {
-                // Animation de secousse pour indiquer l'erreur (style iOS)
-                JPanel errorPanel = newFirstName.isEmpty() ? firstNamePanel : lastNamePanel;
-                shakeComponent(errorPanel);
-                shakeComponent(errorPanel);
-                JOptionPane.showMessageDialog(editContactFrame, "First name and last name are required.",
-                        "Required Fields", JOptionPane.WARNING_MESSAGE);
-            }
-        });
-
-        deleteButton.addActionListener(_ -> {
-            // Animation de confirmation style iOS
-            deleteButton.setForeground(Color.WHITE);
-            deleteButton.setBackground(Color.RED);
-
-            Timer timer = new Timer(300, _ -> {
-                contactListModel.removeElement(contact);
-            });
-            timer.setRepeats(false);
-            timer.start();
-        });
-
-        editContactFrame.setSize(350, 600);
-        editContactFrame.setLocationRelativeTo(null);
-        editContactFrame.setVisible(true);
+    private static Icon createHomeIcon() {
+        return new ImageIcon(); // You can add actual icons here
     }
 
-    // Afficher le menu contextuel pour un contact
-    private static void showContextMenu(Contact contact, JList<Contact> contactList, Point location) {
-        JPopupMenu contextMenu = new JPopupMenu();
-        contextMenu.setBackground(new Color(250, 250, 250));
-        contextMenu.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 1, true));
-
-        JMenuItem editItem = new JMenuItem("Edit");
-        editItem.setFont(new Font("SF Pro Text", Font.PLAIN, 14));
-        editItem.setForeground(Color.BLACK);
-        editItem.addActionListener(_ -> openEditContactWindow(contact, contactList));
-
-        JMenuItem callItem = new JMenuItem("Call");
-        callItem.setFont(new Font("SF Pro Text", Font.PLAIN, 14));
-        callItem.setForeground(new Color(0, 122, 255));
-        callItem.addActionListener(_ -> JOptionPane.showMessageDialog(null, "Calling " + contact.getName() + "..."));
-
-        JMenuItem messageItem = new JMenuItem("Message");
-        messageItem.setFont(new Font("SF Pro Text", Font.PLAIN, 14));
-        messageItem.setForeground(new Color(0, 122, 255));
-        messageItem.addActionListener(_ -> JOptionPane.showMessageDialog(null, "Messaging " + contact.getName() + "..."));
-
-        JMenuItem emailItem = new JMenuItem("Email");
-        emailItem.setFont(new Font("SF Pro Text", Font.PLAIN, 14));
-        emailItem.setForeground(new Color(0, 122, 255));
-        emailItem.addActionListener(_ -> {
-            if (contact.getEmail() != null && !contact.getEmail().isEmpty()) {
-                JOptionPane.showMessageDialog(null, "Sending email to " + contact.getEmail() + "...");
-            } else {
-                JOptionPane.showMessageDialog(null, "No email address available for " + contact.getName());
-            }
-        });
-
-        JMenuItem deleteItem = new JMenuItem("Delete");
-        deleteItem.setFont(new Font("SF Pro Text", Font.PLAIN, 14));
-        deleteItem.setForeground(Color.RED);
-        deleteItem.addActionListener(_ -> {
-            contactListModel.removeElement(contact);
-            ContactManager.saveContacts();
-        });
-
-        contextMenu.add(callItem);
-        contextMenu.add(messageItem);
-        contextMenu.add(emailItem);
-        contextMenu.addSeparator();
-        contextMenu.add(editItem);
-        contextMenu.addSeparator();
-        contextMenu.add(deleteItem);
-
-        contextMenu.show(contactList, location.x, location.y);
+    private static Icon createContactIcon() {
+        return new ImageIcon(); // You can add actual icons here
     }
 
-    // Créer un champ de formulaire style iOS
-    private static JPanel createFormField(String labelText) {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(Color.WHITE);
-        panel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(220, 220, 220)),
-                BorderFactory.createEmptyBorder(10, 15, 10, 15)));
-
-        JLabel label = new JLabel(labelText);
-        label.setFont(new Font("SF Pro Text", Font.PLAIN, 14));
-        label.setForeground(Color.GRAY);
-        label.setPreferredSize(new Dimension(120, 25));
-
-        JTextField textField = new JTextField();
-        textField.setFont(new Font("SF Pro Text", Font.PLAIN, 16));
-        textField.setBorder(null);
-
-        panel.add(label, BorderLayout.WEST);
-        panel.add(textField, BorderLayout.CENTER);
-
-        return panel;
-    }
-
-    // Animation de secousse pour indiquer une erreur (style iOS)
-    private static void shakeComponent(Component component) {
-        final int[] moves = {-5, 5, -5, 5, -3, 3, -2, 2, -1, 1, 0};
-        final int delay = 50;
-        final Point originalLocation = component.getLocation();
-
-        Timer timer = new Timer(delay, null);
-        timer.addActionListener(new ActionListener() {
-            int index = 0;
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (index < moves.length) {
-                    int offset = moves[index++];
-                    component.setLocation(new Point(originalLocation.x + offset, originalLocation.y));
-                } else {
-                    component.setLocation(originalLocation);
-                    timer.stop();
-                }
-            }
-        });
-        timer.start();
-    }
-
-    public static ImageIcon getContactIcon() {
-        return contactIcon;
-    }
-
-
-    // Custom renderer style iOS
-    static class ContactCellRenderer extends JPanel implements ListCellRenderer<Contact> {
-        private final JLabel iconLabel = new JLabel();
-        private final JLabel nameLabel = new JLabel();
-        private final JLabel phoneLabel = new JLabel();
-        private final ImageIcon contactIcon;
-
-        public ContactCellRenderer(ImageIcon icon) {
-            this.contactIcon = icon;
-            setLayout(new BorderLayout(10, 5));
-
-            // Panel pour l'icône
-            JPanel iconPanel = new JPanel(new BorderLayout());
-            iconPanel.setOpaque(false);
-            iconPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 0));
-            iconLabel.setPreferredSize(new Dimension(40, 40));
-            iconPanel.add(iconLabel, BorderLayout.CENTER);
-
-            // Panel pour le texte
-            JPanel textPanel = new JPanel(new GridLayout(2, 1));
-            textPanel.setOpaque(false);
-            textPanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
-
-            nameLabel.setFont(new Font("SF Pro Text", Font.PLAIN, 16));
-            phoneLabel.setFont(new Font("SF Pro Text", Font.PLAIN, 12));
-            phoneLabel.setForeground(Color.GRAY);
-
-            textPanel.add(nameLabel);
-            textPanel.add(phoneLabel);
-
-            // Chevron iOS
-            JLabel arrowLabel = new JLabel("›");
-            arrowLabel.setFont(new Font("SF Pro Text", Font.PLAIN, 24));
-            arrowLabel.setForeground(new Color(180, 180, 180));
-            arrowLabel.setHorizontalAlignment(SwingConstants.RIGHT);
-            arrowLabel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 15));
-
-            add(iconPanel, BorderLayout.WEST);
-            add(textPanel, BorderLayout.CENTER);
-            add(arrowLabel, BorderLayout.EAST);
-
-            // Ligne de séparation style iOS
-            setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(230, 230, 230)),
-                    BorderFactory.createEmptyBorder(5, 5, 5, 5)));
-        }
-
-        @Override
-        public Component getListCellRendererComponent(JList<? extends Contact> list, Contact contact, int index,
-                                                      boolean isSelected, boolean cellHasFocus) {
-            iconLabel.setIcon(contactIcon);
-            nameLabel.setText(contact.getName());
-            phoneLabel.setText(contact.getPhone());
-
-            if (isSelected) {
-                setBackground(new Color(217, 217, 217));  // Gris sélection iOS
-                nameLabel.setForeground(list.getForeground());
-                phoneLabel.setForeground(new Color(100, 100, 100));
-            } else {
-                setBackground(list.getBackground());
-                nameLabel.setForeground(list.getForeground());
-                phoneLabel.setForeground(Color.GRAY);
-            }
-
-            return this;
-        }
+    private static Icon createMapIcon() {
+        return new ImageIcon(); // You can add actual icons here
     }
 }

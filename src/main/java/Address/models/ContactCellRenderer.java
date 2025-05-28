@@ -3,7 +3,6 @@ package Address.models;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.awt.Graphics2D;
 
 /**
  * Custom cell renderer for contact list with iOS-style appearance
@@ -19,16 +18,12 @@ public class ContactCellRenderer extends JPanel implements ListCellRenderer<Cont
     private JLabel nameLabel;
     private JLabel phoneLabel;
     private JLabel chevronLabel;
-    private final ImageIcon defaultIcon;
+    private ImageIcon defaultIcon;
 
-    public ContactCellRenderer(ImageIcon defaultIcon) {
-        this.defaultIcon = defaultIcon;
+
+    public ContactCellRenderer() {
         initializeComponents();
         setupLayout();
-        photoLabel = null;
-        nameLabel = null;
-        phoneLabel = null;
-        chevronLabel = null;
     }
 
     private void initializeComponents() {
@@ -37,6 +32,10 @@ public class ContactCellRenderer extends JPanel implements ListCellRenderer<Cont
         photoLabel.setPreferredSize(new Dimension(40, 40));
         photoLabel.setHorizontalAlignment(SwingConstants.CENTER);
         photoLabel.setVerticalAlignment(SwingConstants.CENTER);
+        
+        // Initialize default icon
+        defaultIcon = createDefaultAvatar(new Contact("A", "", "", "", "", "", "", null));
+        photoLabel.setIcon(defaultIcon);
 
         // Name label
         nameLabel = new JLabel();
@@ -129,7 +128,7 @@ public class ContactCellRenderer extends JPanel implements ListCellRenderer<Cont
         // Set name
         String displayName = contact.getDisplayName();
         nameLabel.setText(displayName);
-        nameLabel.setForeground(isSelected ? Color.BLACK : Color.BLACK);
+        nameLabel.setForeground(Color.BLACK);
 
         // Set phone with formatting
         String phoneText = contact.getFormattedPhone();

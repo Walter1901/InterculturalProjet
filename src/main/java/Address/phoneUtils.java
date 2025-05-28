@@ -7,7 +7,7 @@ import java.awt.*;
  * Utility class for the phone application interface.
  * Provides methods to create UI components and manage the phone interface.
  */
-public class phoneUtils {
+class phoneUtils {
 
     static int SCREEN_WIDTH = 360;
     static int SCREEN_HEIGHT = 640;
