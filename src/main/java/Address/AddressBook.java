@@ -1,9 +1,12 @@
 package Address;
 
 import Address.models.*;
-
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 /**
  * Main AddressBook application class that integrates all functionalities
@@ -499,7 +502,7 @@ public class AddressBook {
             public void windowClosing(java.awt.event.WindowEvent e) {
                 // Supprimer l'onglet lors de la fermeture
                 tabbedPane.removeTabAt(index);
-                
+
                 // Si un contact a été créé, le sauvegarder
                 if (dialog.getContact() != null) {
                     Contact newContact = dialog.getContact();

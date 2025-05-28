@@ -6,6 +6,7 @@ import gallery.service.ImageManager;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
 
 /**
  * Manages the user interface for the gallery application.
@@ -194,39 +195,61 @@ public class GalleryUI {
 
     /**
      * Shows a dialog for selecting and adding an image to the gallery.
-     *
-     * The dialog presents a list of available images from the resources folder.
-     * When an image is selected, it is compressed using TinyPNG and added to
-     * the current album.
+     * First tries to load images from embedded resources, then falls back to
+     * an external directory. Creates the external directory if it doesn't exist.
      */
     private void showAddImageDialog() {
-        // Get list of available images
+        // Try embedded resources first
         String[] imagePaths = imageManager.getImageResourcePaths();
 
-        // Check if any images are available
+        // If no images in resources, use external folder
         if (imagePaths.length == 0) {
-            JOptionPane.showMessageDialog(null,
-                    "No images found in /resources/imageGallery",
-                    "No Images Found",
-                    JOptionPane.ERROR_MESSAGE);
-            return;
+            String externalFolder = System.getProperty("user.home") + File.separator + "GalleryImages";
+            File externalDir = new File(externalFolder);
+
+            if (!externalDir.exists()) {
+                externalDir.mkdirs();
+                JOptionPane.showMessageDialog(null,
+                        "Folder created: " + externalFolder + "\n" +
+                                "Please add your images to this folder and restart the application.",
+                        "Folder Created",
+                        JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+
+            File[] files = externalDir.listFiles((dir, name) ->
+                    name.toLowerCase().endsWith(".jpg") ||
+                            name.toLowerCase().endsWith(".png") ||
+                            name.toLowerCase().endsWith(".jpeg") ||
+                            name.toLowerCase().endsWith(".gif"));
+
+            if (files == null || files.length == 0) {
+                JOptionPane.showMessageDialog(null,
+                        "No images found in: " + externalFolder + "\n" +
+                                "Please add images (.jpg, .png, .jpeg, .gif) to this folder.",
+                        "No Images Found",
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // Convert files to paths
+            imagePaths = new String[files.length];
+            for (int i = 0; i < files.length; i++) {
+                imagePaths[i] = files[i].getAbsolutePath();
+            }
         }
 
-        // Show image selection dialog
+        // Rest of the code unchanged
         String selected = (String) JOptionPane.showInputDialog(null,
                 "Select an image:",
                 "Add Image",
                 JOptionPane.PLAIN_MESSAGE,
                 null,
                 imagePaths,
-                imagePaths[0]);  // First image is default selection
+                imagePaths[0]);
 
-        // Process selection if user didn't cancel
         if (selected != null) {
-            // Compress and add image to current album
             albumManager.addImageToAlbum(app.getCurrentAlbum(), selected);
-
-            // Return to main view and save gallery state
             cardLayout.show(mainPanel, "main");
             app.saveGallery();
         }
